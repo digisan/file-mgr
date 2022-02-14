@@ -1,11 +1,11 @@
-package filemgr
+package fdb
 
 import (
 	"net/http"
 	"os"
 	"path/filepath"
 
-	ft "github.com/digisan/file-mgr/filetype"
+	ft "github.com/digisan/file-mgr/fdb/ftype"
 	fd "github.com/digisan/gotk/filedir"
 	lk "github.com/digisan/logkit"
 )
@@ -31,9 +31,9 @@ var (
 		"application/x-gzip":        ft.Binary,
 	}
 	mBinType = map[string]string{
+		"":      ft.Executable,
 		".rmvb": ft.Video,
 		".exe":  ft.Executable,
-		"":      ft.Executable,
 		".md":   ft.Text,
 		".mod":  ft.Text,
 		".sum":  ft.Text,
