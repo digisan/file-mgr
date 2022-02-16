@@ -1,10 +1,14 @@
 package fdb
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	badger "github.com/dgraph-io/badger/v3"
+	ft "github.com/digisan/file-mgr/fdb/ftype"
 	"github.com/digisan/file-mgr/fdb/status"
+	"github.com/digisan/go-generics/str"
 	lk "github.com/digisan/logkit"
 )
 
@@ -49,7 +53,7 @@ func (db *FDB) Close() {
 
 ///////////////////////////////////////////////////////////////
 
-func (db *FDB) RemoveFile(path string, lock bool) error {
+func (db *FDB) RemoveFileItem(id string, lock bool) error {
 	if lock {
 		db.Lock()
 		defer db.Unlock()
@@ -57,7 +61,7 @@ func (db *FDB) RemoveFile(path string, lock bool) error {
 
 	prefixList := [][]byte{}
 	for _, stat := range status.AllStatus() {
-		prefix := stat + SEP + path + SEP
+		prefix := stat + SEP + id + SEP
 		prefixList = append(prefixList, []byte(prefix))
 	}
 
@@ -67,6 +71,7 @@ func (db *FDB) RemoveFile(path string, lock bool) error {
 		for _, prefix := range prefixList {
 			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 				if err = txn.Delete(it.Item().KeyCopy(nil)); err != nil {
+					lk.WarnOnErr("%v", err)
 					return err
 				}
 			}
@@ -75,11 +80,11 @@ func (db *FDB) RemoveFile(path string, lock bool) error {
 	})
 }
 
-func (db *FDB) UpdateFile(fi *FileItem) error {
+func (db *FDB) UpdateFileItem(fi *FileItem) error {
 	db.Lock()
 	defer db.Unlock()
 
-	if err := db.RemoveFile(fi.Path, false); err != nil {
+	if err := db.RemoveFileItem(fi.Id, false); err != nil {
 		return err
 	}
 	return db.dbFile.Update(func(txn *badger.Txn) error {
@@ -87,13 +92,18 @@ func (db *FDB) UpdateFile(fi *FileItem) error {
 	})
 }
 
-func (db *FDB) LoadFile(path string) (*FileItem, bool, error) {
+func (db *FDB) LoadFileItem(id, stat string) (*FileItem, bool, error) {
 	db.Lock()
 	defer db.Unlock()
 
 	prefixList := [][]byte{}
-	for _, stat := range status.AllStatus() {
-		prefix := stat + SEP + path + SEP
+	if stat == "" {
+		for _, stat := range status.AllStatus() {
+			prefix := stat + SEP + id + SEP
+			prefixList = append(prefixList, []byte(prefix))
+		}
+	} else {
+		prefix := stat + SEP + id + SEP
 		prefixList = append(prefixList, []byte(prefix))
 	}
 
@@ -121,4 +131,49 @@ func (db *FDB) LoadFile(path string) (*FileItem, bool, error) {
 	}
 
 	return nil, false, err
+}
+
+func (db *FDB) SearchFileItems(ftype string, groups ...string) (fis []*FileItem, err error) {
+	if ftype != "" && str.NotIn(ftype, ft.AllFileType()...) {
+		return nil, fmt.Errorf("file type [%s] is unregistered", ftype)
+	}
+	return db.ListFileItems(func(fi *FileItem) bool {
+		if ftype != "" {
+			return fi.Type() == ftype && strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
+		}
+		if ftype == "" && len(groups) > 0 {
+			return strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
+		}
+		return true
+	})
+}
+
+func (db *FDB) ListFileItems(filter func(*FileItem) bool) (fis []*FileItem, err error) {
+	db.Lock()
+	defer db.Unlock()
+
+	err = db.dbFile.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			return item.Value(func(v []byte) error {
+				fi := &FileItem{}
+				fi.Unmarshal(item.Key(), v)
+				if filter(fi) {
+					fis = append(fis, fi)
+				}
+				return nil
+			})
+		}
+		return nil
+	})
+	return
+}
+
+func (db *FDB) IsExisting(id string) bool {
+	fi, ok, err := db.LoadFileItem(id, "")
+	return err == nil && ok && fi.Status != status.Deleted
 }

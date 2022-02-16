@@ -7,7 +7,7 @@ import (
 )
 
 func TestFileItem(t *testing.T) {
-	fi := FileItem{Tm: time.Now().String(), Path: "a/b/c", Status: "received", Description: "this is a description test", RefBy: "ID111"}
+	fi := FileItem{Tm: time.Now().String(), Path: "a/b/c", Status: "received", Note: "this is a note test", RefBy: "ID111"}
 	fmt.Println(fi)
 
 	dbKey, dbVal := fi.Marshal()

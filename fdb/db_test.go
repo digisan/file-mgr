@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	lk "github.com/digisan/logkit"
 )
 
 func TestUpdateFile(t *testing.T) {
@@ -11,14 +13,37 @@ func TestUpdateFile(t *testing.T) {
 	defer fdb.Close()
 
 	fi := &FileItem{
-		Path:        "a/b/c",
-		Tm:          time.Now().String(),
-		Status:      "received",
-		GroupList:   "",
-		Description: "this is a description test",
-		RefBy:       "ID111",
+		Id:        "id",
+		Path:      "a/b/c/d",
+		Tm:        time.Now().String(),
+		Status:    "received",
+		GroupList: "",
+		Note:      "this is a note test",
+		RefBy:     "ID111",
 	}
 	fmt.Println(fi)
 
-	fdb.UpdateFile(fi)
+	fdb.UpdateFileItem(fi)
+}
+
+func TestLoadFile(t *testing.T) {
+	fdb := GetDB("../data")
+	defer fdb.Close()
+
+	fi, ok, err := fdb.LoadFileItem("id", "received")
+	fmt.Println(fi, ok, err)
+}
+
+func TestListFile(t *testing.T) {
+	fdb := GetDB("../data")
+	defer fdb.Close()
+
+	fis, err := fdb.ListFileItems(func(fi *FileItem) bool {
+		return true
+	})
+	lk.FailOnErr("%v", err)
+	for _, fi := range fis {
+		fmt.Println("--------------------------------")
+		fmt.Println(fi)
+	}
 }
