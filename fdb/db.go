@@ -53,7 +53,7 @@ func (db *FDB) Close() {
 
 ///////////////////////////////////////////////////////////////
 
-func (db *FDB) RemoveFileItem(id string, lock bool) error {
+func (db *FDB) RemoveFileItem(id, path string, lock bool) error {
 	if lock {
 		db.Lock()
 		defer db.Unlock()
@@ -61,7 +61,7 @@ func (db *FDB) RemoveFileItem(id string, lock bool) error {
 
 	prefixList := [][]byte{}
 	for _, stat := range status.AllStatus() {
-		prefix := stat + SEP + id + SEP
+		prefix := stat + SEP + id + SEP + path + SEP
 		prefixList = append(prefixList, []byte(prefix))
 	}
 
@@ -84,7 +84,10 @@ func (db *FDB) UpdateFileItem(fi *FileItem) error {
 	db.Lock()
 	defer db.Unlock()
 
-	if err := db.RemoveFileItem(fi.Id, false); err != nil {
+	if fi.PPath == "" {
+		fi.PPath = fi.Path
+	}
+	if err := db.RemoveFileItem(fi.Id, fi.PPath, false); err != nil {
 		return err
 	}
 	return db.dbFile.Update(func(txn *badger.Txn) error {
@@ -159,7 +162,7 @@ func (db *FDB) ListFileItems(filter func(*FileItem) bool) (fis []*FileItem, err 
 		defer it.Close()
 		for it.Rewind(); it.Valid(); it.Next() {
 			item := it.Item()
-			return item.Value(func(v []byte) error {
+			item.Value(func(v []byte) error {
 				fi := &FileItem{}
 				fi.Unmarshal(item.Key(), v)
 				if filter(fi) {

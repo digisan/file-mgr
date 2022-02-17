@@ -19,6 +19,7 @@ import (
 type FileItem struct {
 	Id        string // id
 	Path      string // file path
+	PPath     string // previous path
 	Tm        string // timestamp
 	Status    string // "received", "applying", "approved", etc
 	GroupList string // "group1^group2^...^groupN", [once changed, => change Path, => move file]
@@ -75,10 +76,12 @@ func (fi FileItem) String() string {
 		sb := strings.Builder{}
 		typ := reflect.TypeOf(fi)
 		val := reflect.ValueOf(fi)
+		sb.WriteString("{\n")
 		for i := 0; i < typ.NumField(); i++ {
 			fld, val := typ.Field(i), val.Field(i)
-			sb.WriteString(fmt.Sprintf("%-12s %v\n", fld.Name+":", val.String()))
+			sb.WriteString(fmt.Sprintf("\t%-12s %v\n", fld.Name+":", val.String()))
 		}
+		sb.WriteString("}\n")
 		return sb.String()
 	}
 	return "[Empty FileItem]\n"
@@ -162,10 +165,10 @@ func (fi *FileItem) SetStatus(stat string) error {
 
 func (fi *FileItem) SetGroup(idx int, grp string) error {
 	oldGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
-	oldPath := fi.Path
+	fi.PPath = fi.Path
 
-	if !fd.FileExists(oldPath) {
-		return fmt.Errorf("[%s] file is NOT existing", oldPath)
+	if !fd.FileExists(fi.PPath) {
+		return fmt.Errorf("[%s] file is NOT existing", fi.PPath)
 	}
 
 	grps := strings.Split(fi.GroupList, SEP_GRP)
@@ -191,7 +194,7 @@ func (fi *FileItem) SetGroup(idx int, grp string) error {
 		fi.Path = filepath.Join(head, fi.GroupList, tail) // user-space/name/groupX/text/sample.txt
 	}
 	gio.MustCreateDir(filepath.Dir(fi.Path))
-	return os.Rename(oldPath, fi.Path)
+	return os.Rename(fi.PPath, fi.Path)
 }
 
 func (fi *FileItem) AddRefBy(refCodes ...string) {
