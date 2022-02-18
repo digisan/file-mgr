@@ -2,7 +2,8 @@ package status
 
 import "github.com/digisan/go-generics/str"
 
-const (	
+const (
+	All      = "all"
 	Received = "received"
 	Applying = "applying"
 	Approved = "approved"
@@ -12,7 +13,7 @@ const (
 )
 
 func AllStatus() []string {
-	return []string{Unknown, Received, Applying, Approved, Rejected, Deleted}
+	return []string{Received, Applying, Approved, Rejected, Deleted, Unknown}
 }
 
 func StatusOK(status string) bool {

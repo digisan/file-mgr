@@ -2,7 +2,8 @@ package ftype
 
 import "github.com/digisan/go-generics/str"
 
-const (	
+const (
+	All        = "all"
 	Text       = "text"
 	Image      = "image"
 	Audio      = "audio"
@@ -13,7 +14,7 @@ const (
 )
 
 func AllFileType() []string {
-	return []string{Unknown, Text, Image, Audio, Video, Executable, Binary}
+	return []string{Text, Image, Audio, Video, Executable, Binary, Unknown}
 }
 
 func TypeOK(fType string) bool {

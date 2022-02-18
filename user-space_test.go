@@ -27,7 +27,7 @@ func TestSaveFile(t *testing.T) {
 
 	data, err := os.ReadFile("./go.sum")
 	lk.FailOnErr("%v", err)
-	err = us.SaveFile("go.sum", "this is a test 1", data)
+	err = us.SaveFile("go.sum", "this is a test 1", data, "group0", "group1", "group2")
 	lk.FailOnErr("%v", err)
 	fmt.Println(us)
 
@@ -39,7 +39,7 @@ func TestSaveFile(t *testing.T) {
 
 	data, err = os.ReadFile("./go.sum")
 	lk.FailOnErr("%v", err)
-	err = us.SaveFile("go.sum", "this is a test 2", data)
+	err = us.SaveFile("go.sum", "this is a test 2", data, "GROUP00", "GROUP01", "GROUP02")
 	lk.FailOnErr("%v", err)
 	fmt.Println(us)
 }
@@ -50,12 +50,14 @@ func TestFileItemDB(t *testing.T) {
 	lk.FailOnErr("%v", err)
 	// fmt.Println(us)
 
-	fis := us.SearchFileItem(ft.Text)
+	fis := us.SearchFileItem(ft.All, "g*0", "gr*1", "*2")
+
+	lk.FailOnErrWhen(len(fis) == 0, "%v", fmt.Errorf("fis not found"))
 
 	fis[0].AddRefBy("abc", "def", "def", "ghi")
 	fis[0].RmRefBy("abc")
 	fis[0].SetStatus(status.Applying)
-	lk.FailOnErr("%v", fis[0].SetGroup(0, "GRP0"))
+	lk.FailOnErr("%v", fis[0].SetGroup(1, "GRP1"))
 
 	us.Update(fis[0])
 

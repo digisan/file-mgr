@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/digisan/file-mgr/fdb"
+	ft "github.com/digisan/file-mgr/fdb/ftype"
 	"github.com/digisan/file-mgr/fdb/status"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
@@ -141,12 +143,18 @@ func (us *UserSpace) SelfCheck(rmEmptyDir bool) error {
 			return err
 		}
 		for _, dir := range dirs {
+		NEXT:
 			empty, err := fd.DirIsEmpty(dir)
 			if err != nil {
 				return err
 			}
 			if empty {
-				return os.RemoveAll(dir)
+				err = os.RemoveAll(dir)
+				if err != nil {
+					return err
+				}
+				dir = filepath.Dir(dir)
+				goto NEXT
 			}
 		}
 	}
@@ -154,22 +162,24 @@ func (us *UserSpace) SelfCheck(rmEmptyDir bool) error {
 }
 
 func (us *UserSpace) SearchFileItem(ftype string, groups ...string) (fis []*fdb.FileItem) {
+	regs := make([]*regexp.Regexp, 0, len(groups))
+	for _, grp := range groups {
+		ltr := strings.ReplaceAll(grp, `*`, `[\d\w\s]*`)
+		ltr = strings.ReplaceAll(ltr, `?`, `[\d\w\s]?`)
+		regs = append(regs, regexp.MustCompile(ltr))
+	}
+NEXT:
 	for _, fi := range us.FIs {
-		switch {
-		case ftype != "" && len(groups) > 0:
-			if fi.Type() == ftype && fi.GroupList == strings.Join(groups, fdb.SEP_GRP) {
+		if ftype == ft.All || ftype == fi.Type() {
+			grouplist := strings.Split(fi.GroupList, fdb.SEP_GRP)
+			if len(regs) == len(grouplist) {
+				for i, reg := range regs {
+					if reg.FindString(grouplist[i]) == "" {
+						continue NEXT
+					}
+				}
 				fis = append(fis, fi)
 			}
-		case ftype == "" && len(groups) > 0:
-			if fi.GroupList == strings.Join(groups, fdb.SEP_GRP) {
-				fis = append(fis, fi)
-			}
-		case ftype != "" && len(groups) == 0:
-			if fi.Type() == ftype {
-				fis = append(fis, fi)
-			}
-		default:
-			fis = us.FIs
 		}
 	}
 	return
