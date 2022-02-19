@@ -3,6 +3,7 @@ package filemgr
 import (
 	"crypto/md5"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -93,15 +94,19 @@ func (us *UserSpace) Update(fi *fdb.FileItem) error {
 	return fmt.Errorf("%v does NOT belong to %v", *fi, *us)
 }
 
-func (us *UserSpace) SaveFile(filename, note string, data []byte, groups ...string) error {
+func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...string) error {
 
 	// /root/name/group0/.../groupX/type/file
 	grppath := filepath.Join(groups...)         // /group0/.../groupX/
 	path := filepath.Join(us.UserPath, grppath) // /root/name/group0/.../groupX/
-	gio.MustCreateDir(path)
-	oldpath := filepath.Join(path, filename) // /root/name/group0/.../groupX/file
-	err := os.WriteFile(oldpath, data, os.ModePerm)
+	gio.MustCreateDir(path)                     // mkdir /root/name/group0/.../groupX/
+	oldpath := filepath.Join(path, filename)    // /root/name/group0/.../groupX/file
+	oldFile, err := os.Create(oldpath)
 	if err != nil {
+		return err
+	}
+	defer oldFile.Close()
+	if _, err = io.Copy(oldFile, r); err != nil {
 		return err
 	}
 
@@ -111,6 +116,10 @@ func (us *UserSpace) SaveFile(filename, note string, data []byte, groups ...stri
 	newpath = filepath.Join(newpath, filename) // /root/name/group0/.../groupX/type/file
 	err = os.Rename(oldpath, newpath)
 	if err == nil {
+		data, err := os.ReadFile(newpath)
+		if err != nil {
+			return err
+		}
 		fi := &fdb.FileItem{
 			Id:        fmt.Sprintf("%x", md5.Sum(data)), // sha1.Sum, sha256.Sum256
 			Path:      newpath,

@@ -163,6 +163,10 @@ func (fi *FileItem) SetStatus(stat string) error {
 	return nil
 }
 
+func (fi *FileItem) AddNote(note string) {
+	fi.Note = note
+}
+
 func (fi *FileItem) SetGroup(idx int, grp string) error {
 	oldGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
 	fi.PPath = fi.Path

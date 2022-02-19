@@ -25,9 +25,11 @@ func TestSaveFile(t *testing.T) {
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 
-	data, err := os.ReadFile("./go.sum")
+	file0, err := os.Open("./go.sum")
 	lk.FailOnErr("%v", err)
-	err = us.SaveFile("go.sum", "this is a test 1", data, "group0", "group1", "group2")
+	defer file0.Close()
+
+	err = us.SaveFile("go.sum", "this is a test 1", file0, "group0", "group1", "group2")
 	lk.FailOnErr("%v", err)
 	fmt.Println(us)
 
@@ -37,9 +39,11 @@ func TestSaveFile(t *testing.T) {
 	us, err = UseUser("qing")
 	lk.FailOnErr("%v", err)
 
-	data, err = os.ReadFile("./go.sum")
+	file1, err := os.Open("./go.sum")
 	lk.FailOnErr("%v", err)
-	err = us.SaveFile("go.sum", "this is a test 2", data, "GROUP00", "GROUP01", "GROUP02")
+	defer file1.Close()
+
+	err = us.SaveFile("go.sum", "this is a test 2", file1, "GROUP00", "GROUP01", "GROUP02")
 	lk.FailOnErr("%v", err)
 	fmt.Println(us)
 }
