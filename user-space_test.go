@@ -13,9 +13,7 @@ import (
 
 func TestLoadFileItem(t *testing.T) {
 
-	SetUSRoot("./data/user-space", "./data/fdb")
-
-	db := fdb.GetDB()
+	db := fdb.GetDB("./data/fdb")
 	defer db.Close()
 
 	fis, err := db.SearchFileItems("")
@@ -25,12 +23,9 @@ func TestLoadFileItem(t *testing.T) {
 
 func TestSaveFile(t *testing.T) {
 
-	SetUSRoot("./data/user-space", "./data/fdb")
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
 
-	db := fdb.GetDB()
-	defer db.Close()
-
-	us0, err := UseUser("qing miao", db)
+	us0, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 
 	file0, err := os.Open("./go.sum")
@@ -44,7 +39,7 @@ func TestSaveFile(t *testing.T) {
 	//
 	fmt.Println("-----------------------------")
 
-	us1, err := UseUser("qing", db)
+	us1, err := UseUser("qing")
 	lk.FailOnErr("%v", err)
 
 	file1, err := os.Open("./go.sum")
@@ -71,12 +66,9 @@ func TestSaveFile(t *testing.T) {
 
 func TestFileItemDB(t *testing.T) {
 
-	SetUSRoot("./data/user-space", "./data/fdb")
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
 
-	db := fdb.GetDB()
-	defer db.Close()
-
-	us, err := UseUser("qing miao", db)
+	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 	// fmt.Println(us)
 
@@ -97,17 +89,14 @@ func TestFileItemDB(t *testing.T) {
 
 func TestCheck(t *testing.T) {
 
-	SetUSRoot("./data/user-space", "./data/fdb")
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
 
-	db := fdb.GetDB()
-	defer db.Close()
-
-	us, err := UseUser("qing miao", db)
+	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 	fmt.Println(us.SelfCheck(true))
 	fmt.Println(us)
 
-	us, err = UseUser("qing", db)
+	us, err = UseUser("qing")
 	lk.FailOnErr("%v", err)
 	fmt.Println(us.SelfCheck(true))
 	fmt.Println(us)

@@ -12,16 +12,7 @@ import (
 	lk "github.com/digisan/logkit"
 )
 
-var (
-	mDbUsing = &sync.Map{}
-	rootDB   = "data/user-fdb"
-)
-
-func SetDbRoot(rtFDB string) {
-	if rtFDB != "" {
-		rootDB = rtFDB
-	}
-}
+var once sync.Once
 
 type FDB struct {
 	sync.Mutex
@@ -29,8 +20,9 @@ type FDB struct {
 	dbFile *badger.DB
 }
 
+var fDB *FDB // global, for keeping single instance
+
 func open(dir string) *badger.DB {
-	defer func() { mDbUsing.Store(dir, true) }()
 	opt := badger.DefaultOptions("").WithInMemory(true)
 	if dir != "" {
 		opt = badger.DefaultOptions(dir)
@@ -40,24 +32,26 @@ func open(dir string) *badger.DB {
 	return db
 }
 
-// Get DB for file items
-func GetDB() *FDB {
-	val, ok := mDbUsing.Load(rootDB)
-	if ok && val.(bool) {
-		return nil
+func GetDB(dir string) *FDB {
+	if fDB == nil {
+		once.Do(func() {
+			fDB = &FDB{
+				dbPath: dir,
+				dbFile: open(dir),
+			}
+		})
 	}
-	return &FDB{
-		dbPath: rootDB,
-		dbFile: open(rootDB),
-	}
+	return fDB
 }
 
 func (db *FDB) Close() {
-	defer func() { mDbUsing.Store(db.dbPath, false) }()
 	db.Lock()
-
 	defer db.Unlock()
-	lk.FailOnErr("%v", db.dbFile.Close())
+
+	if db.dbFile != nil {
+		lk.FailOnErr("%v", db.dbFile.Close())
+		db.dbFile = nil
+	}
 }
 
 ///////////////////////////////////////////////////////////////

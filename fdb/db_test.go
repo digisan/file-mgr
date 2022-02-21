@@ -10,9 +10,7 @@ import (
 
 func TestUpdateFile(t *testing.T) {
 
-	SetDbRoot("../data")
-
-	fdb := GetDB()
+	fdb := GetDB("../data")
 	defer fdb.Close()
 
 	fi := &FileItem{
@@ -31,9 +29,7 @@ func TestUpdateFile(t *testing.T) {
 
 func TestLoadFile(t *testing.T) {
 
-	SetDbRoot("../data")
-
-	fdb := GetDB()
+	fdb := GetDB("../data")
 	defer fdb.Close()
 
 	fi, ok, err := fdb.LoadFileItem("id", "received")
@@ -42,9 +38,7 @@ func TestLoadFile(t *testing.T) {
 
 func TestListFile(t *testing.T) {
 
-	SetDbRoot("../data")
-
-	fdb := GetDB()
+	fdb := GetDB("../data")
 	defer fdb.Close()
 
 	fis, err := fdb.ListFileItems(func(fi *FileItem) bool {

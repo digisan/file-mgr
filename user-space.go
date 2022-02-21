@@ -20,7 +20,17 @@ import (
 
 var (
 	rootSp = "data/user-space"
+	rootDb = "data/user-fdb"
 )
+
+var fDB4Close *fdb.FDB // for closing
+
+func CloseFileMgr() {
+	if fDB4Close != nil {
+		fDB4Close.Close()
+		fDB4Close = nil
+	}
+}
 
 type UserSpace struct {
 	UName    string              // user unique name
@@ -46,22 +56,20 @@ func (us UserSpace) String() string {
 	return sb.String()
 }
 
-func SetUSRoot(rtSpace, rtFDB string) {
+func SetFileMgrRoot(rtSpace, rtFDB string) {
 	if rtSpace != "" {
 		rootSp = filepath.Clean(rtSpace)
 	}
 	if rtFDB != "" {
-		fdb.SetDbRoot(rtFDB)
+		rootDb = filepath.Clean(rtFDB)
 	}
 }
 
-func UseUser(name string, fdb *fdb.FDB) (*UserSpace, error) {
-	if fdb == nil {
-		return nil, fmt.Errorf("fdb MUST NOT be nil")
-	}
+func UseUser(name string) (*UserSpace, error) {
+	defer func() { fDB4Close = fdb.GetDB(rootDb) }()
 	us := &UserSpace{
 		UName: name,
-		db:    fdb,
+		db:    fdb.GetDB(rootDb),
 		IDs:   make(map[string]struct{}),
 	}
 	us.init()
