@@ -14,7 +14,14 @@ import (
 
 var (
 	mDbUsing = &sync.Map{}
+	rootDB   = "data/user-fdb"
 )
+
+func SetDbRoot(rtFDB string) {
+	if rtFDB != "" {
+		rootDB = rtFDB
+	}
+}
 
 type FDB struct {
 	sync.Mutex
@@ -33,20 +40,22 @@ func open(dir string) *badger.DB {
 	return db
 }
 
-func GetDB(dir string) *FDB {
-	val, ok := mDbUsing.Load(dir)
+// Get DB for file items
+func GetDB() *FDB {
+	val, ok := mDbUsing.Load(rootDB)
 	if ok && val.(bool) {
 		return nil
 	}
 	return &FDB{
-		dbPath: dir,
-		dbFile: open(dir),
+		dbPath: rootDB,
+		dbFile: open(rootDB),
 	}
 }
 
 func (db *FDB) Close() {
 	defer func() { mDbUsing.Store(db.dbPath, false) }()
 	db.Lock()
+
 	defer db.Unlock()
 	lk.FailOnErr("%v", db.dbFile.Close())
 }
@@ -86,6 +95,7 @@ func (db *FDB) UpdateFileItem(fi *FileItem) error {
 
 	if fi.PPath == "" {
 		fi.PPath = fi.Path
+		defer func() { fi.PPath = "" }()
 	}
 	if err := db.RemoveFileItem(fi.Id, fi.PPath, false); err != nil {
 		return err

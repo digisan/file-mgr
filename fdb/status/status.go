@@ -5,7 +5,6 @@ import "github.com/digisan/go-generics/str"
 const (
 	All      = "all"
 	Received = "received"
-	Applying = "applying"
 	Approved = "approved"
 	Rejected = "rejected"
 	Deleted  = "deleted"
@@ -13,7 +12,7 @@ const (
 )
 
 func AllStatus() []string {
-	return []string{Received, Applying, Approved, Rejected, Deleted, Unknown}
+	return []string{Received, Approved, Rejected, Deleted, Unknown}
 }
 
 func StatusOK(status string) bool {

@@ -15,17 +15,19 @@ import (
 	"github.com/digisan/file-mgr/fdb/status"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
+	lk "github.com/digisan/logkit"
 )
 
 var (
-	rootDb = "data/fdb"
 	rootSp = "data/user-space"
 )
 
 type UserSpace struct {
-	UName    string
-	UserPath string
-	FIs      []*fdb.FileItem
+	UName    string              // user unique name
+	UserPath string              // user space path, usually is "root/name/"
+	db       *fdb.FDB            // shared by all users
+	FIs      []*fdb.FileItem     // all fileitems belong to this user
+	IDs      map[string]struct{} // fileitem is group loaded in memory
 }
 
 func (us UserSpace) String() string {
@@ -44,22 +46,26 @@ func (us UserSpace) String() string {
 	return sb.String()
 }
 
-func SetRoot(rtSp, rtDb string) {
-	if rtSp != "" {
-		rootSp = filepath.Clean(rtSp)
+func SetUSRoot(rtSpace, rtFDB string) {
+	if rtSpace != "" {
+		rootSp = filepath.Clean(rtSpace)
 	}
-	if rtDb != "" {
-		rootDb = filepath.Clean(rtDb)
+	if rtFDB != "" {
+		fdb.SetDbRoot(rtFDB)
 	}
 }
 
-func UseUser(name string) (*UserSpace, error) {
+func UseUser(name string, fdb *fdb.FDB) (*UserSpace, error) {
+	if fdb == nil {
+		return nil, fmt.Errorf("fdb MUST NOT be nil")
+	}
 	us := &UserSpace{
 		UName: name,
+		db:    fdb,
+		IDs:   make(map[string]struct{}),
 	}
 	us.init()
-	err := us.loadFI()
-	return us, err
+	return us.loadFI(true)
 }
 
 func (us *UserSpace) init() *UserSpace {
@@ -72,24 +78,38 @@ func (us *UserSpace) init() *UserSpace {
 }
 
 // db
-func (us *UserSpace) loadFI() (err error) {
-	db := fdb.GetDB(rootDb)
-	defer db.Close()
-	us.FIs, err = db.ListFileItems(func(fi *fdb.FileItem) bool {
-		return us.Has(fi)
+func (us *UserSpace) loadFI(selfcheck bool) (*UserSpace, error) {
+	if selfcheck {
+		if err := us.SelfCheck(false); err != nil {
+			return nil, err
+		}
+	}
+	var err error
+	us.FIs, err = us.db.ListFileItems(func(fi *fdb.FileItem) bool {
+		return us.Own(fi)
 	})
-	return err
+	for _, fi := range us.FIs {
+		us.IDs[fi.Id+fi.Path] = struct{}{}
+	}
+	return us, err
+}
+
+func (us *UserSpace) hasMemFI(fi *fdb.FileItem) bool {
+	_, ok := us.IDs[fi.Id+fi.Path]
+	return ok
 }
 
 ////////////////////////////////////////////////////////////
 
 // db
-func (us *UserSpace) Update(fi *fdb.FileItem) error {
-	db := fdb.GetDB(rootDb)
-	defer db.Close()
-
-	if us.Has(fi) {
-		return db.UpdateFileItem(fi)
+func (us *UserSpace) Update(fi *fdb.FileItem, selfcheck bool) error {
+	defer func() {
+		if selfcheck {
+			lk.FailOnErr("%v", us.SelfCheck(false))
+		}
+	}()
+	if us.Own(fi) {
+		return us.db.UpdateFileItem(fi)
 	}
 	return fmt.Errorf("%v does NOT belong to %v", *fi, *us)
 }
@@ -129,14 +149,16 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 			Note:      note,
 			RefBy:     "",
 		}
-		if err = us.Update(fi); err == nil {
-			us.FIs = append(us.FIs, fi)
+		if !us.hasMemFI(fi) {
+			if err = us.Update(fi, true); err == nil {
+				us.FIs = append(us.FIs, fi)
+			}
 		}
 	}
 	return err
 }
 
-func (us *UserSpace) Has(fi *fdb.FileItem) bool {
+func (us *UserSpace) Own(fi *fdb.FileItem) bool {
 	return strings.Contains(fi.Path, us.UserPath)
 }
 
@@ -188,6 +210,20 @@ NEXT:
 					}
 				}
 				fis = append(fis, fi)
+			}
+		}
+	}
+	return
+}
+
+func (us *UserSpace) PathContent(groups ...string) (content []string) {
+	gpath := filepath.Join(groups...)
+	path := strings.TrimSuffix(filepath.Join(us.UserPath, gpath), "/") + "/"
+	for _, fi := range us.FIs {
+		if strings.HasPrefix(fi.Path, path) {
+			segs := strings.Split(strings.TrimPrefix(fi.Path, path), "/")
+			if len(segs) > 0 {
+				content = append(content, segs[0])
 			}
 		}
 	}
