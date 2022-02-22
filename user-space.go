@@ -240,7 +240,7 @@ func (us *UserSpace) PathContent(path string) (content []string) {
 
 func (us *UserSpace) FileItemByPath(path string) *fdb.FileItem {
 	for _, fi := range us.FIs {
-		if strings.HasSuffix(fi.Path, path) {
+		if path != "" && strings.HasSuffix(fi.Path, path) {
 			return fi
 		}
 	}

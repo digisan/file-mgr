@@ -17,14 +17,14 @@ import (
 )
 
 type FileItem struct {
-	Id        string // id
-	Path      string // file path
-	PPath     string // previous path
-	Tm        string // timestamp
-	Status    string // "received", "applying", "approved", etc
-	GroupList string // "group1^group2^...^groupN", [once changed, => change Path, => move file]
-	Note      string // "note..."
-	RefBy     string // refcode1^refcode2^...
+	Id        string `json:"id"`   // id
+	Path      string `json:"path"` // file path
+	prevPath  string // previous path
+	Tm        string `json:"time"`   // timestamp
+	Status    string `json:"status"` // "received", "applying", "approved", etc
+	GroupList string `json:"groups"` // "group1^group2^...^groupN", [once changed, => change Path, => move file]
+	Note      string `json:"note"`   // "note..."
+	RefBy     string `json:"refby"`  // refcode1^refcode2^...
 }
 
 const (
@@ -169,10 +169,10 @@ func (fi *FileItem) AddNote(note string) {
 
 func (fi *FileItem) SetGroup(idx int, grp string) error {
 	oldGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
-	fi.PPath = fi.Path
+	fi.prevPath = fi.Path
 
-	if !fd.FileExists(fi.PPath) {
-		return fmt.Errorf("[%s] file is NOT existing", fi.PPath)
+	if !fd.FileExists(fi.prevPath) {
+		return fmt.Errorf("[%s] file is NOT existing", fi.prevPath)
 	}
 
 	grps := strings.Split(fi.GroupList, SEP_GRP)
@@ -198,7 +198,7 @@ func (fi *FileItem) SetGroup(idx int, grp string) error {
 		fi.Path = filepath.Join(head, fi.GroupList, tail) // user-space/name/groupX/text/sample.txt
 	}
 	gio.MustCreateDir(filepath.Dir(fi.Path))
-	return os.Rename(fi.PPath, fi.Path)
+	return os.Rename(fi.prevPath, fi.Path)
 }
 
 func (fi *FileItem) AddRefBy(refCodes ...string) {

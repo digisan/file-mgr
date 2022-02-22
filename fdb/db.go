@@ -87,11 +87,11 @@ func (db *FDB) UpdateFileItem(fi *FileItem) error {
 	db.Lock()
 	defer db.Unlock()
 
-	if fi.PPath == "" {
-		fi.PPath = fi.Path
-		defer func() { fi.PPath = "" }()
+	if fi.prevPath == "" {
+		fi.prevPath = fi.Path
+		defer func() { fi.prevPath = "" }()
 	}
-	if err := db.RemoveFileItem(fi.Id, fi.PPath, false); err != nil {
+	if err := db.RemoveFileItem(fi.Id, fi.prevPath, false); err != nil {
 		return err
 	}
 	return db.dbFile.Update(func(txn *badger.Txn) error {
