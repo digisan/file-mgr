@@ -13,6 +13,7 @@ import (
 	"github.com/digisan/file-mgr/fdb"
 	ft "github.com/digisan/file-mgr/fdb/ftype"
 	"github.com/digisan/file-mgr/fdb/status"
+	"github.com/digisan/go-generics/str"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
 	lk "github.com/digisan/logkit"
@@ -224,15 +225,32 @@ NEXT:
 	return
 }
 
-func (us *UserSpace) PathContent(groups ...string) (content []string) {
-	gpath := filepath.Join(groups...)
-	path := strings.TrimSuffix(filepath.Join(us.UserPath, gpath), "/") + "/"
+func (us *UserSpace) PathContent(path string) (content []string) {
+	fullpath := strings.TrimSuffix(filepath.Join(us.UserPath, path), "/") + "/"
 	for _, fi := range us.FIs {
-		if strings.HasPrefix(fi.Path, path) {
-			segs := strings.Split(strings.TrimPrefix(fi.Path, path), "/")
+		if strings.HasPrefix(fi.Path, fullpath) {
+			segs := strings.Split(strings.TrimPrefix(fi.Path, fullpath), "/")
 			if len(segs) > 0 {
 				content = append(content, segs[0])
 			}
+		}
+	}
+	return str.MkSet(content...)
+}
+
+func (us *UserSpace) FileItemByPath(path string) *fdb.FileItem {
+	for _, fi := range us.FIs {
+		if strings.HasSuffix(fi.Path, path) {
+			return fi
+		}
+	}
+	return nil
+}
+
+func (us *UserSpace) FileItemByID(id string) (fis []*fdb.FileItem) {
+	for _, fi := range us.FIs {
+		if fi.Id == id {
+			fis = append(fis, fi)
 		}
 	}
 	return

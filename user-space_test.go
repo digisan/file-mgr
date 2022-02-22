@@ -60,8 +60,41 @@ func TestSaveFile(t *testing.T) {
 
 	/////////////////
 
-	lvl1 := us1.PathContent("GROUP00", "GROUP01")
-	fmt.Println(lvl1)
+	lvl1 := us1.PathContent("")
+	fmt.Println("root:", lvl1)
+
+	lvl1 = us1.PathContent("GROUP00")
+	fmt.Println("GROUP00:", lvl1)
+
+	lvl1 = us1.PathContent("GROUP00/GROUP01")
+	fmt.Println("GROUP00/GROUP01:", lvl1)
+
+	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP03")
+	fmt.Println("GROUP00/GROUP01/GROUP03:", lvl1)
+
+	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP02")
+	fmt.Println("GROUP00/GROUP01/GROUP02:", lvl1)
+
+	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP03/document")
+	fmt.Println("GROUP00/GROUP01/GROUP03/document:", lvl1)
+
+	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP02/document")
+	fmt.Println("GROUP00/GROUP01/GROUP02/document:", lvl1)
+
+	////////////////////////////////////////////////
+
+	fi := us1.FileItemByPath("GROUP00/GROUP01/GROUP02/document/go.sum")
+	fmt.Println(fi)
+
+	fis := us1.FileItemByID("cf7851b71a462087ce36705f182c50ff")
+	fmt.Println(fis[0])
+
+	// fi.AddRefBy
+	// fi.RmRefBy
+	// fi.AddNote
+	// fi.SetStatus
+	// fi.SetGroup
+	// us1.Update(fi, true)
 }
 
 func TestFileItemDB(t *testing.T) {
@@ -81,8 +114,8 @@ func TestFileItemDB(t *testing.T) {
 	fis[0].SetStatus(status.Approved)
 	lk.FailOnErr("%v", fis[0].SetGroup(0, "GRP1"))
 
-	us.Update(fis[0], true)
-	// us.SelfCheck(true)
+	lk.FailOnErr("%v", us.Update(fis[0], true))
+	// us.SelfCheck(true) // remove empty directories
 
 	fmt.Println(us)
 }

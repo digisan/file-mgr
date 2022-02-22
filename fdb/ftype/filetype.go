@@ -4,17 +4,18 @@ import "github.com/digisan/go-generics/str"
 
 const (
 	All        = "all"
-	Text       = "text"
-	Image      = "image"
+	Document   = "document"
+	Photo      = "photo"
 	Audio      = "audio"
 	Video      = "video"
+	Archive    = "archive"
 	Executable = "executable?"
 	Binary     = "binary"
 	Unknown    = "unknown"
 )
 
 func AllFileType() []string {
-	return []string{Text, Image, Audio, Video, Executable, Binary, Unknown}
+	return []string{Document, Photo, Audio, Video, Archive, Executable, Binary, Unknown}
 }
 
 func TypeOK(fType string) bool {

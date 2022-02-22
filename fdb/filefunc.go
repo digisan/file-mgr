@@ -17,27 +17,28 @@ func fileContentType(f *os.File) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Use the net/http package's handy DectectContentType function. Always returns a valid
+	// Use the net/http package's handy Detect ContentType function. Always returns a valid
 	// content-type by returning "application/octet-stream" if no others seemed to match.
 	contentType := http.DetectContentType(buffer)
 	return contentType, nil
 }
 
+// adding more...
 var (
 	mContType = map[string]string{
-		"text/plain; charset=utf-8": ft.Text,
-		"application/pdf":           ft.Text,
+		"text/plain; charset=utf-8": ft.Document,
+		"application/pdf":           ft.Document,
 		"application/octet-stream":  ft.Binary,
-		"application/x-gzip":        ft.Binary,
+		"application/x-gzip":        ft.Archive,
 	}
 	mBinType = map[string]string{
 		"":      ft.Executable,
 		".rmvb": ft.Video,
 		".exe":  ft.Executable,
-		".md":   ft.Text,
-		".mod":  ft.Text,
-		".sum":  ft.Text,
-		".gz":   ft.Binary,
+		".md":   ft.Document,
+		".mod":  ft.Document,
+		".sum":  ft.Document,
+		".gz":   ft.Archive,
 	}
 )
 
