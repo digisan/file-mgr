@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -165,6 +166,16 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 		}
 	}
 	return err
+}
+
+// 'fh' --- FormFile("param")
+func (us *UserSpace) SaveFormFile(filename, note string, fh *multipart.FileHeader, groups ...string) error {
+	file, err := fh.Open()
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return us.SaveFile(filename, note, file, groups...)
 }
 
 func (us *UserSpace) Own(fi *fdb.FileItem) bool {
