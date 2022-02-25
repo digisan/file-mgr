@@ -155,6 +155,21 @@ func (fi *FileItem) Name() string {
 	return filepath.Base(fi.Path)
 }
 
+// type value as `<video><source src="movie.mp4" type="video/mp4"> ...`
+func (fi *FileItem) MediaType() string {
+	ext := strings.TrimSuffix(filepath.Ext(fi.Path), ".")
+	switch fi.Type() {
+	case "photo":
+		return "image/" + ext // apng gif ico cur jpg jpeg jfif pjpeg pjp png svg
+	case "audio":
+		return "audio/" + ext // mid midi rm ram wma aac wav ogg mp3 mp4
+	case "video":
+		return "video/" + ext // mpg mpeg avi wmv mov rm ram swf flv ogg webm mp4
+	default:
+		return ""
+	}
+}
+
 func (fi *FileItem) SetStatus(stat string) error {
 	if str.NotIn(stat, status.AllStatus()...) {
 		return fmt.Errorf("status [%v] is unregistered", stat)
