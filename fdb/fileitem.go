@@ -131,9 +131,9 @@ func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) {
 			fnFldAddr: fi.ValFieldAddr,
 		},
 	}
-	for _, param := range params {
+	for idx, param := range params {
 		for i, seg := range bytes.Split(param.in, []byte(SEP)) {
-			if i == MOK_END || i == MOV_END {
+			if (idx == 0 && i == MOK_END) || (idx == 1 && i == MOV_END) {
 				break
 			}
 			*param.fnFldAddr(i) = string(seg)
