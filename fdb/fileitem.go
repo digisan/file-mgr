@@ -28,7 +28,7 @@ type FileItem struct {
 }
 
 const (
-	SEP     = "||"
+	SEP     = "^^"
 	SEP_GRP = "^"
 	SEP_REF = "^"
 )
@@ -133,6 +133,9 @@ func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) {
 	}
 	for _, param := range params {
 		for i, seg := range bytes.Split(param.in, []byte(SEP)) {
+			if i == MOK_END || i == MOV_END {
+				break
+			}
 			*param.fnFldAddr(i) = string(seg)
 		}
 	}
