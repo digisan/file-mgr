@@ -169,13 +169,13 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 }
 
 // 'fh' --- FormFile("param")
-func (us *UserSpace) SaveFormFile(filename, note string, fh *multipart.FileHeader, groups ...string) error {
+func (us *UserSpace) SaveFormFile(fh *multipart.FileHeader, note string, groups ...string) error {
 	file, err := fh.Open()
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	return us.SaveFile(filename, note, file, groups...)
+	return us.SaveFile(fh.Filename, note, file, groups...)
 }
 
 func (us *UserSpace) Own(fi *fdb.FileItem) bool {
