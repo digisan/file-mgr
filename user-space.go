@@ -46,7 +46,7 @@ func (us UserSpace) String() string {
 	sb := &strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%-13s%s\n", "UName:", us.UName))
 	sb.WriteString(fmt.Sprintf("%-13s%s\n", "UserPath:", us.UserPath))
-	sb.WriteString("[\n")
+	sb.WriteString("FileItems: [\n")
 	for i, fi := range us.FIs {
 		if i == len(us.FIs)-1 {
 			sb.WriteString(fmt.Sprint(fi))
@@ -124,7 +124,8 @@ func (us *UserSpace) Update(fi *fdb.FileItem, selfcheck bool) error {
 	return fmt.Errorf("%v does NOT belong to %v", *fi, *us)
 }
 
-func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...string) error {
+// return storage path & error
+func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...string) (string, error) {
 
 	// /root/name/group0/.../groupX/type/file
 	grppath := filepath.Join(groups...)         // /group0/.../groupX/
@@ -133,11 +134,11 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 	oldpath := filepath.Join(path, filename)    // /root/name/group0/.../groupX/file
 	oldFile, err := os.Create(oldpath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer oldFile.Close()
 	if _, err = io.Copy(oldFile, r); err != nil {
-		return err
+		return "", err
 	}
 
 	fType := fdb.GetFileType(oldpath)
@@ -148,7 +149,7 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 	if err == nil {
 		data, err := os.ReadFile(newpath)
 		if err != nil {
-			return err
+			return "", err
 		}
 		fi := &fdb.FileItem{
 			Id:        fmt.Sprintf("%x", md5.Sum(data)), // sha1.Sum, sha256.Sum256
@@ -165,14 +166,14 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 			}
 		}
 	}
-	return err
+	return newpath, err
 }
 
-// 'fh' --- FormFile("param")
-func (us *UserSpace) SaveFormFile(fh *multipart.FileHeader, note string, groups ...string) error {
+// 'fh' --- FormFile("param"), return storage path & error
+func (us *UserSpace) SaveFormFile(fh *multipart.FileHeader, note string, groups ...string) (string, error) {
 	file, err := fh.Open()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 	return us.SaveFile(fh.Filename, note, file, groups...)

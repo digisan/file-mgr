@@ -32,9 +32,10 @@ func TestSaveFile(t *testing.T) {
 	lk.FailOnErr("%v", err)
 	defer file0.Close()
 
-	err = us0.SaveFile("go.sum", "this is a test 1", file0, "group0", "group1", "group2")
+	path, err := us0.SaveFile("go.sum", "this is a test 1", file0, "group0", "group1", "group2")
 	lk.FailOnErr("%v", err)
-	fmt.Println(us0)
+	fmt.Println("path:", path)
+	fmt.Println("us0:", us0)
 
 	//
 	fmt.Println("-----------------------------")
@@ -46,17 +47,21 @@ func TestSaveFile(t *testing.T) {
 	lk.FailOnErr("%v", err)
 	defer file1.Close()
 
-	err = us1.SaveFile("go.sum", "this is a test 2", file1, "GROUP00", "GROUP01", "GROUP02")
+	path, err = us1.SaveFile("go.sum", "this is a test 2", file1, "GROUP00", "GROUP01", "GROUP02")
 	lk.FailOnErr("%v", err)
+	fmt.Println("path:", path)
 
 	file2, err := os.Open("./go.mod")
 	lk.FailOnErr("%v", err)
 	defer file2.Close()
 
-	err = us1.SaveFile("go.mod", "this is a test 3", file2, "GROUP00", "GROUP01", "GROUP03")
+	path, err = us1.SaveFile("go.mod", "this is a test 3", file2, "GROUP00", "GROUP01", "GROUP03")
 	lk.FailOnErr("%v", err)
+	fmt.Println("path:", path)
 
-	fmt.Println(us1)
+	fmt.Println("us1:", us1)
+
+	fmt.Println("-----------------------------")
 
 	/////////////////
 
@@ -84,10 +89,10 @@ func TestSaveFile(t *testing.T) {
 	////////////////////////////////////////////////
 
 	fi := us1.FileItemByPath("GROUP00/GROUP01/GROUP02/document/go.sum")
-	fmt.Println(fi)
+	fmt.Println("fi:", fi)
 
 	fis := us1.FileItemByID("cf7851b71a462087ce36705f182c50ff")
-	fmt.Println(fis[0])
+	fmt.Println("fis[0]:", fis[0])
 
 	// fi.AddRefBy
 	// fi.RmRefBy

@@ -202,18 +202,18 @@ func (fi *FileItem) SetGroup(idx int, grp string) error {
 	}
 	fi.GroupList = strings.Join(grps, SEP_GRP)
 	fi.GroupList = strings.TrimPrefix(fi.GroupList, SEP_GRP)
-	fi.GroupList = strings.TrimSuffix(fi.GroupList, SEP_GRP)
+	fi.GroupList = strings.TrimSuffix(fi.GroupList, SEP_GRP) // GroupList Update
 
 	// [once changed, => change Path, => move file]
 	if oldGrpPath != "" {
 		newGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
-		fi.Path = strings.ReplaceAll(fi.Path, oldGrpPath, newGrpPath) // Path update
+		fi.Path = strings.ReplaceAll(fi.Path, oldGrpPath, newGrpPath) // Path Update
 	} else {
 		file := filepath.Base(fi.Path)
 		dir := filepath.Dir(fi.Path)
 		head := filepath.Dir(dir)                         // user-space/name
 		tail := filepath.Join(filepath.Base(dir), file)   // text/sample.txt
-		fi.Path = filepath.Join(head, fi.GroupList, tail) // user-space/name/groupX/text/sample.txt
+		fi.Path = filepath.Join(head, fi.GroupList, tail) // user-space/name/groupX/text/sample.txt , Path Update
 	}
 	gio.MustCreateDir(filepath.Dir(fi.Path))
 	return os.Rename(fi.prevPath, fi.Path)
