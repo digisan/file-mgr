@@ -33,12 +33,20 @@ var (
 	}
 	mBinType = map[string]string{
 		"":      ft.Executable,
-		".rmvb": ft.Video,
 		".exe":  ft.Executable,
+		".rmvb": ft.Video,
+		".mp4":  ft.Video,
+		".ogg":  ft.Video,
+		".ogv":  ft.Video,
+		".webm": ft.Video,
 		".md":   ft.Document,
 		".mod":  ft.Document,
 		".sum":  ft.Document,
 		".gz":   ft.Archive,
+		".png":  ft.Photo,
+		".jpg":  ft.Photo,
+		".jpeg": ft.Photo,
+		".gif":  ft.Photo,
 	}
 )
 

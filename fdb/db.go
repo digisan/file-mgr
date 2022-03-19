@@ -68,18 +68,18 @@ func (db *FDB) RemoveFileItem(id, path string, lock bool) error {
 		prefixList = append(prefixList, []byte(prefix))
 	}
 
-	return db.dbFile.Update(func(txn *badger.Txn) (err error) {
+	return db.dbFile.Update(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		for _, prefix := range prefixList {
 			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-				if err = txn.Delete(it.Item().KeyCopy(nil)); err != nil {
+				if err := txn.Delete(it.Item().KeyCopy(nil)); err != nil {
 					lk.WarnOnErr("%v", err)
 					return err
 				}
 			}
 		}
-		return err
+		return nil
 	})
 }
 
