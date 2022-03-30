@@ -14,7 +14,7 @@ import (
 	"github.com/digisan/file-mgr/fdb"
 	ft "github.com/digisan/file-mgr/fdb/ftype"
 	"github.com/digisan/file-mgr/fdb/status"
-	"github.com/digisan/go-generics/str"
+	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
 	lk "github.com/digisan/logkit"
@@ -247,7 +247,7 @@ func (us *UserSpace) PathContent(path string) (content []string) {
 			}
 		}
 	}
-	return str.MkSet(content...)
+	return Settify(content...)
 }
 
 func (us *UserSpace) FileItemByPath(path string) *fdb.FileItem {

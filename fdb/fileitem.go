@@ -10,7 +10,7 @@ import (
 
 	ft "github.com/digisan/file-mgr/fdb/ftype"
 	"github.com/digisan/file-mgr/fdb/status"
-	"github.com/digisan/go-generics/str"
+	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
 	lk "github.com/digisan/logkit"
@@ -174,7 +174,7 @@ func (fi *FileItem) MediaType() string {
 }
 
 func (fi *FileItem) SetStatus(stat string) error {
-	if str.NotIn(stat, status.AllStatus()...) {
+	if NotIn(stat, status.AllStatus()...) {
 		return fmt.Errorf("status [%v] is unregistered", stat)
 	}
 	fi.Status = stat

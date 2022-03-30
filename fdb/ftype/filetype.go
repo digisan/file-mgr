@@ -1,6 +1,6 @@
 package ftype
 
-import "github.com/digisan/go-generics/str"
+import . "github.com/digisan/go-generics/v2"
 
 const (
 	All        = "all"
@@ -19,5 +19,5 @@ func AllFileType() []string {
 }
 
 func TypeOK(fType string) bool {
-	return str.In(fType, AllFileType()...)
+	return In(fType, AllFileType()...)
 }

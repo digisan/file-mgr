@@ -1,6 +1,6 @@
 package status
 
-import "github.com/digisan/go-generics/str"
+import . "github.com/digisan/go-generics/v2"
 
 const (
 	All      = "all"
@@ -16,5 +16,5 @@ func AllStatus() []string {
 }
 
 func StatusOK(status string) bool {
-	return str.In(status, AllStatus()...)
+	return In(status, AllStatus()...)
 }
