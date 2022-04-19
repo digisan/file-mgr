@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/digisan/go-generics v0.1.9
-	github.com/digisan/gotk v0.1.2
+	github.com/digisan/gotk v0.1.3
 	github.com/digisan/logkit v0.0.8
 )
 

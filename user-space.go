@@ -277,3 +277,19 @@ func (us *UserSpace) FileContentByID(id string) []byte {
 	}
 	return nil
 }
+
+func (us *UserSpace) DelFileItemByID(id string) error {
+	for _, fi := range us.FileItemByID(id) {
+		if fi.RefBy == "" {
+			if err := us.db.RemoveFileItem(fi.ID(), fi.Path, true); err != nil {
+				lk.WarnOnErr("%v", err)
+				return err
+			}
+			if err := gio.RmFileAndEmptyDir(fi.Path); err != nil {
+				lk.WarnOnErr("%v", err)
+				return err
+			}
+		}
+	}
+	return nil
+}

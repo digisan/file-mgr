@@ -21,6 +21,19 @@ func TestLoadFileItem(t *testing.T) {
 	fmt.Println(fis)
 }
 
+func TestDelFileItem(t *testing.T) {
+
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
+
+	db := fdb.GetDB("./data/fdb")
+	defer db.Close()
+
+	us0, err := UseUser("qing")
+	lk.FailOnErr("%v", err)
+
+	fmt.Println(us0.DelFileItemByID("187d53acea40e296f02da195e39f05d6"))
+}
+
 func TestSaveFile(t *testing.T) {
 
 	SetFileMgrRoot("./data/user-space", "./data/fdb")
