@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	rootSp = "data/user-space"
-	rootDb = "data/user-fdb"
+	rootSP = "data/user-space"
+	rootDB = "data/user-fdb"
 )
 
 var fDB4Close *fdb.FDB // for closing
@@ -60,18 +60,18 @@ func (us UserSpace) String() string {
 
 func SetFileMgrRoot(rtSpace, rtFDB string) {
 	if rtSpace != "" {
-		rootSp = filepath.Clean(rtSpace)
+		rootSP = filepath.Clean(rtSpace)
 	}
 	if rtFDB != "" {
-		rootDb = filepath.Clean(rtFDB)
+		rootDB = filepath.Clean(rtFDB)
 	}
 }
 
 func UseUser(name string) (*UserSpace, error) {
-	defer func() { fDB4Close = fdb.GetDB(rootDb) }()
+	defer func() { fDB4Close = fdb.GetDB(rootDB) }()
 	us := &UserSpace{
 		UName: name,
-		db:    fdb.GetDB(rootDb),
+		db:    fdb.GetDB(rootDB),
 		IDs:   make(map[string]struct{}),
 	}
 	us.init()
@@ -79,7 +79,7 @@ func UseUser(name string) (*UserSpace, error) {
 }
 
 func (us *UserSpace) init() *UserSpace {
-	us.UserPath = filepath.Join(rootSp, us.UName)
+	us.UserPath = filepath.Join(rootSP, us.UName)
 	us.UserPath = strings.TrimSuffix(us.UserPath, "/") + "/"
 	if !fd.DirExists(us.UserPath) {
 		gio.MustCreateDir(us.UserPath)
@@ -266,4 +266,14 @@ func (us *UserSpace) FileItemByID(id string) (fis []*fdb.FileItem) {
 		}
 	}
 	return
+}
+
+func (us *UserSpace) FileContentByID(id string) []byte {
+	fis := us.FileItemByID(id)
+	if len(fis) > 0 {
+		data, err := os.ReadFile(fis[0].Path)
+		lk.WarnOnErr("%v", err)
+		return data
+	}
+	return nil
 }

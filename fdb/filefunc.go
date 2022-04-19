@@ -42,6 +42,8 @@ var (
 		".md":   ft.Document,
 		".mod":  ft.Document,
 		".sum":  ft.Document,
+		".doc":  ft.Document,
+		".docx": ft.Document,
 		".gz":   ft.Archive,
 		".png":  ft.Photo,
 		".jpg":  ft.Photo,

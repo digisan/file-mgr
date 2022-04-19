@@ -68,31 +68,31 @@ func TestSaveFile(t *testing.T) {
 	lvl1 := us1.PathContent("")
 	fmt.Println("root:", lvl1)
 
-	lvl1 = us1.PathContent("GROUP00")
-	fmt.Println("GROUP00:", lvl1)
-
-	lvl1 = us1.PathContent("GROUP00/GROUP01")
-	fmt.Println("GROUP00/GROUP01:", lvl1)
-
-	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP03")
-	fmt.Println("GROUP00/GROUP01/GROUP03:", lvl1)
-
-	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP02")
-	fmt.Println("GROUP00/GROUP01/GROUP02:", lvl1)
-
-	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP03/document")
-	fmt.Println("GROUP00/GROUP01/GROUP03/document:", lvl1)
-
-	lvl1 = us1.PathContent("GROUP00/GROUP01/GROUP02/document")
-	fmt.Println("GROUP00/GROUP01/GROUP02/document:", lvl1)
+	for _, path := range []string{
+		"GROUP00",
+		"GROUP00/GROUP01",
+		"GROUP00/GROUP01/GROUP03",
+		"GROUP00/GROUP01/GROUP02",
+		"GROUP00/GROUP01/GROUP03/document",
+		"GROUP00/GROUP01/GROUP02/document",
+	} {
+		fmt.Println(path, us1.PathContent(path))
+	}
 
 	////////////////////////////////////////////////
 
 	fi := us1.FileItemByPath("GROUP00/GROUP01/GROUP02/document/go.sum")
 	fmt.Println("fi:", fi)
 
-	fis := us1.FileItemByID("cf7851b71a462087ce36705f182c50ff")
-	fmt.Println("fis[0]:", fis[0])
+	id := "04a17805dfdebf30b46875371a3c7d28"
+	fis := us1.FileItemByID(id)
+	if len(fis) > 0 {
+		fmt.Println("fis[0]:", fis[0])
+	} else {
+		fmt.Printf("Couldn't find file item @v%s\n", id)
+	}
+
+	fmt.Println(string(us1.FileContentByID(id)))
 
 	// fi.AddRefBy
 	// fi.RmRefBy
