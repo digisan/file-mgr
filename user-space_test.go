@@ -3,6 +3,7 @@ package filemgr
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/digisan/file-mgr/fdb"
@@ -31,7 +32,7 @@ func TestDelFileItem(t *testing.T) {
 	us0, err := UseUser("qing")
 	lk.FailOnErr("%v", err)
 
-	fmt.Println(us0.DelFileItemByID("187d53acea40e296f02da195e39f05d6"))
+	fmt.Println(us0.DelFileItemByID("8301ceb3ea3b5bf311fcab06f304ae14"))
 }
 
 func TestSaveFile(t *testing.T) {
@@ -81,15 +82,16 @@ func TestSaveFile(t *testing.T) {
 	lvl1 := us1.PathContent("")
 	fmt.Println("root:", lvl1)
 
-	for _, path := range []string{
-		"GROUP00",
-		"GROUP00/GROUP01",
-		"GROUP00/GROUP01/GROUP03",
-		"GROUP00/GROUP01/GROUP02",
-		"GROUP00/GROUP01/GROUP03/document",
-		"GROUP00/GROUP01/GROUP02/document",
+	for _, path := range [][]string{
+		{},
+		{"GROUP00"},
+		{"GROUP00", "GROUP01"},
+		{"GROUP00", "GROUP01", "GROUP03"},
+		{"GROUP00", "GROUP01", "GROUP02"},
+		{"GROUP00", "GROUP01", "GROUP03", "document"},
+		{"GROUP00", "GROUP01", "GROUP02", "document"},
 	} {
-		fmt.Println(path, us1.PathContent(path))
+		fmt.Println("2022-04/"+filepath.Join(path...), us1.PathContent("2022-04", path...))
 	}
 
 	////////////////////////////////////////////////
@@ -97,7 +99,7 @@ func TestSaveFile(t *testing.T) {
 	fi := us1.FileItemByPath("GROUP00/GROUP01/GROUP02/document/go.sum")
 	fmt.Println("fi:", fi)
 
-	id := "04a17805dfdebf30b46875371a3c7d28"
+	id := "8301ceb3ea3b5bf311fcab06f304ae14"
 	fis := us1.FileItemByID(id)
 	if len(fis) > 0 {
 		fmt.Println("fis[0]:", fis[0])

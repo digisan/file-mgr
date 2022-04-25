@@ -128,10 +128,10 @@ func (us *UserSpace) Update(fi *fdb.FileItem, selfcheck bool) error {
 func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...string) (string, error) {
 
 	// /root/name/group0/.../groupX/type/file
-	grppath := filepath.Join(groups...)         // /group0/.../groupX/
-	path := filepath.Join(us.UserPath, grppath) // /root/name/group0/.../groupX/
-	gio.MustCreateDir(path)                     // mkdir /root/name/group0/.../groupX/
-	oldpath := filepath.Join(path, filename)    // /root/name/group0/.../groupX/file
+	grppath := filepath.Join(groups...)                                       // /group0/.../groupX/
+	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grppath) // /root/name/year-month/group0/.../groupX/
+	gio.MustCreateDir(path)                                                   // mkdir /root/name/year-month/group0/.../groupX/
+	oldpath := filepath.Join(path, filename)                                  // /root/name/year-month/group0/.../groupX/file
 	oldFile, err := os.Create(oldpath)
 	if err != nil {
 		return "", err
@@ -142,9 +142,9 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 	}
 
 	fType := fdb.GetFileType(oldpath)
-	newpath := filepath.Join(path, fType)      // /root/name/group0/.../groupX/type/
-	gio.MustCreateDir(newpath)                 // /root/name/group0/.../groupX/type/
-	newpath = filepath.Join(newpath, filename) // /root/name/group0/.../groupX/type/file
+	newpath := filepath.Join(path, fType)      // /root/name/year-month/group0/.../groupX/type/
+	gio.MustCreateDir(newpath)                 // /root/name/year-month/group0/.../groupX/type/
+	newpath = filepath.Join(newpath, filename) // /root/name/year-month/group0/.../groupX/type/file
 	err = os.Rename(oldpath, newpath)
 	if err == nil {
 		data, err := os.ReadFile(newpath)
@@ -237,7 +237,9 @@ NEXT:
 	return
 }
 
-func (us *UserSpace) PathContent(path string) (content []string) {
+// tmYM: such as "2022-04"
+func (us *UserSpace) PathContent(tmYM string, grps ...string) (content []string) {
+	path := filepath.Join(tmYM, filepath.Join(grps...))
 	fullpath := strings.TrimSuffix(filepath.Join(us.UserPath, path), "/") + "/"
 	for _, fi := range us.FIs {
 		if strings.HasPrefix(fi.Path, fullpath) {
