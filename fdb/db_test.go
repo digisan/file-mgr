@@ -16,11 +16,9 @@ func TestUpdateFile(t *testing.T) {
 	fi := &FileItem{
 		Id:        "id",
 		Path:      "a/b/c/d",
-		Tm:        time.Now().String(),
-		Status:    "received",
+		Tm:        time.Now(),
 		GroupList: "",
 		Note:      "this is a note test",
-		RefBy:     "ID111",
 	}
 	fmt.Println(fi)
 
@@ -32,7 +30,7 @@ func TestLoadFile(t *testing.T) {
 	fdb := GetDB("../data")
 	defer fdb.Close()
 
-	fi, ok, err := fdb.LoadFileItem("id", "received")
+	fi, ok, err := fdb.FirstFileItem("id")
 	fmt.Println(fi, ok, err)
 }
 
@@ -45,6 +43,7 @@ func TestListFile(t *testing.T) {
 		return true
 	})
 	lk.FailOnErr("%v", err)
+	fmt.Println(len(fis))
 	for _, fi := range fis {
 		fmt.Println("--------------------------------")
 		fmt.Println(fi)

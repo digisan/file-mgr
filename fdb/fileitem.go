@@ -7,64 +7,58 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	ft "github.com/digisan/file-mgr/fdb/ftype"
-	"github.com/digisan/file-mgr/fdb/status"
-	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
 	lk "github.com/digisan/logkit"
 )
 
-type FileItem struct {
-	Id        string `json:"id"`   // id
-	Path      string `json:"path"` // file path
-	prevPath  string // previous path
-	Tm        string `json:"time"`   // timestamp
-	Status    string `json:"status"` // "received", "applying", "approved", etc
-	GroupList string `json:"groups"` // "group1^group2^...^groupN", [once changed, => change Path, => move file]
-	Note      string `json:"note"`   // "note..."
-	RefBy     string `json:"refby"`  // refcode1^refcode2^...
-}
-
 const (
 	SEP     = "^^"
 	SEP_GRP = "^"
-	SEP_REF = "^"
 )
+
+type FileItem struct {
+	// key
+	Id string `json:"id"` // id, for linkage
+	// value
+	Path      string `json:"path"` // file path on real local disk
+	prevPath  string
+	Tm        time.Time `json:"time"`   // timestamp
+	GroupList string    `json:"groups"` // "group1^group2^...^groupN", [once changed, => change Path, => move file]
+	Note      string    `json:"note"`   // "note..."
+}
 
 // db key order
 const (
-	MOK_Status int = iota
-	MOK_Id
-	MOK_Path
-	MOK_Tm
-	MOK_GroupList
-	MOK_Note
+	MOK_Id int = iota
 	MOK_END
 )
 
-func (fi *FileItem) KeyFieldAddr(mok int) *string {
-	mFldAddr := map[int]*string{
-		MOK_Status:    &fi.Status,
-		MOK_Id:        &fi.Id,
-		MOK_Path:      &fi.Path,
-		MOK_Tm:        &fi.Tm,
-		MOK_GroupList: &fi.GroupList,
-		MOK_Note:      &fi.Note,
+func (fi *FileItem) KeyFieldAddr(mok int) any {
+	mFldAddr := map[int]any{
+		MOK_Id: &fi.Id,
 	}
 	return mFldAddr[mok]
 }
 
 // db value order
 const (
-	MOV_RefBy int = iota
+	MOV_Path int = iota
+	MOV_Tm
+	MOV_GroupList
+	MOV_Note
 	MOV_END
 )
 
-func (fi *FileItem) ValFieldAddr(mov int) *string {
-	mFldAddr := map[int]*string{
-		MOV_RefBy: &fi.RefBy,
+func (fi *FileItem) ValFieldAddr(mov int) any {
+	mFldAddr := map[int]any{
+		MOV_Path:      &fi.Path,
+		MOV_Tm:        &fi.Tm,
+		MOV_GroupList: &fi.GroupList,
+		MOV_Note:      &fi.Note,
 	}
 	return mFldAddr[mov]
 }
@@ -79,7 +73,7 @@ func (fi FileItem) String() string {
 		sb.WriteString("{\n")
 		for i := 0; i < typ.NumField(); i++ {
 			fld, val := typ.Field(i), val.Field(i)
-			sb.WriteString(fmt.Sprintf("\t%-12s %v\n", fld.Name+":", val.String()))
+			sb.WriteString(fmt.Sprintf("\t%-12s %v\n", fld.Name+":", val))
 		}
 		sb.WriteString("}\n")
 		return sb.String()
@@ -90,7 +84,7 @@ func (fi FileItem) String() string {
 func (fi *FileItem) Marshal() (forKey, forValue []byte) {
 	params := []struct {
 		end       int
-		fnFldAddr func(int) *string
+		fnFldAddr func(int) any
 		out       *[]byte
 	}{
 		{
@@ -110,7 +104,17 @@ func (fi *FileItem) Marshal() (forKey, forValue []byte) {
 			if i > 0 {
 				sb.WriteString(SEP)
 			}
-			sb.WriteString(*param.fnFldAddr(i))
+			switch v := param.fnFldAddr(i).(type) {
+			case *string:
+				sb.WriteString(*v)
+			case *time.Time:
+				encoding, err := (*v).MarshalBinary()
+				lk.FailOnErr("%v", err)
+				sb.Write(encoding)
+			default:
+				panic("Marshal Error Type")
+			}
+
 		}
 		*param.out = []byte(sb.String())
 	}
@@ -120,7 +124,7 @@ func (fi *FileItem) Marshal() (forKey, forValue []byte) {
 func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) {
 	params := []struct {
 		in        []byte
-		fnFldAddr func(int) *string
+		fnFldAddr func(int) any
 	}{
 		{
 			in:        dbKey,
@@ -136,7 +140,16 @@ func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) {
 			if (idx == 0 && i == MOK_END) || (idx == 1 && i == MOV_END) {
 				break
 			}
-			*param.fnFldAddr(i) = string(seg)
+			switch v := param.fnFldAddr(i).(type) {
+			case *string:
+				*v = string(seg)
+			case *time.Time:
+				t := &time.Time{}
+				lk.FailOnErr("%v @ %v", t.UnmarshalBinary(seg), seg)
+				*v = *t
+			default:
+				panic("Unmarshal Error Type")
+			}
 		}
 	}
 }
@@ -173,32 +186,26 @@ func (fi *FileItem) MediaType() string {
 	}
 }
 
-func (fi *FileItem) SetStatus(stat string) error {
-	if NotIn(stat, status.AllStatus()...) {
-		return fmt.Errorf("status [%v] is unregistered", stat)
-	}
-	fi.Status = stat
-	return nil
-}
-
+// Update DB immediately
 func (fi *FileItem) AddNote(note string) {
 	fi.Note = note
 }
 
-func (fi *FileItem) SetGroup(idx int, grp string) error {
+// Update DB immediately
+func (fi *FileItem) SetGroup(grpIdx int, grpName string) (string, error) {
 	oldGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
 	fi.prevPath = fi.Path
 
 	if !fd.FileExists(fi.prevPath) {
-		return fmt.Errorf("[%s] file is NOT existing", fi.prevPath)
+		return "", fmt.Errorf("[%s] file is NOT existing", fi.prevPath)
 	}
 
 	grps := strings.Split(fi.GroupList, SEP_GRP)
 	switch {
-	case idx < len(grps):
-		grps[idx] = grp
-	case idx >= len(grps):
-		grps = append(grps, grp)
+	case grpIdx < len(grps):
+		grps[grpIdx] = grpName
+	case grpIdx >= len(grps):
+		grps = append(grps, grpName)
 	}
 	fi.GroupList = strings.Join(grps, SEP_GRP)
 	fi.GroupList = strings.TrimPrefix(fi.GroupList, SEP_GRP)
@@ -216,28 +223,5 @@ func (fi *FileItem) SetGroup(idx int, grp string) error {
 		fi.Path = filepath.Join(head, fi.GroupList, tail) // user-space/name/groupX/text/sample.txt , Path Update
 	}
 	gio.MustCreateDir(filepath.Dir(fi.Path))
-	return os.Rename(fi.prevPath, fi.Path)
-}
-
-func (fi *FileItem) AddRefBy(refCodes ...string) {
-	for _, refCode := range refCodes {
-		if fi.RefBy == "" {
-			fi.RefBy = refCode
-		} else {
-			if strings.Contains(fi.RefBy, SEP_REF+refCode+SEP_REF) ||
-				strings.HasPrefix(fi.RefBy, refCode+SEP_REF) ||
-				strings.HasSuffix(fi.RefBy, SEP_REF+refCode) {
-				continue
-			}
-			fi.RefBy += SEP_REF + refCode
-		}
-	}
-}
-
-func (fi *FileItem) RmRefBy(refCodes ...string) {
-	for _, refCode := range refCodes {
-		fi.RefBy = strings.ReplaceAll(fi.RefBy, SEP_REF+refCode+SEP_REF, SEP_REF)
-		fi.RefBy = strings.TrimPrefix(fi.RefBy, refCode+SEP_REF)
-		fi.RefBy = strings.TrimSuffix(fi.RefBy, SEP_REF+refCode)
-	}
+	return fi.Path, os.Rename(fi.prevPath, fi.Path)
 }

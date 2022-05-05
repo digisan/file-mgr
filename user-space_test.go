@@ -8,7 +8,6 @@ import (
 
 	"github.com/digisan/file-mgr/fdb"
 	ft "github.com/digisan/file-mgr/fdb/ftype"
-	"github.com/digisan/file-mgr/fdb/status"
 	lk "github.com/digisan/logkit"
 )
 
@@ -29,10 +28,79 @@ func TestDelFileItem(t *testing.T) {
 	db := fdb.GetDB("./data/fdb")
 	defer db.Close()
 
-	us0, err := UseUser("qing")
+	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 
-	fmt.Println(us0.DelFileItemByID("8301ceb3ea3b5bf311fcab06f304ae14"))
+	fmt.Println(us.DelFileItem("865987668c4f27777ab289749212f59b"))
+}
+
+func TestSaveFileV2(t *testing.T) {
+
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
+
+	us, err := UseUser("qing miao")
+	lk.FailOnErr("%v", err)
+
+	///////////////////////////////////////////
+
+	for i, fname := range []string{"go.mod", "go.sum"} {
+
+		i += 8
+
+		file, err := os.Open(fname)
+		lk.FailOnErr("%v", err)
+		defer file.Close()
+
+		path, err := us.SaveFile(fname, fmt.Sprintf("this is a test %d", i), file, "group0", "group1", "group2")
+		lk.FailOnErr("%v", err)
+
+		fmt.Println("---path:", path)
+		// fmt.Println("---us:", us)
+
+		path, err = us.FIs[i].SetGroup(0, "G1")        // ** db is outdated after SetGroup
+		lk.FailOnErr("%v", us.Update(us.FIs[i], true)) // ** must update immediately
+
+		fmt.Println("------path:", path)
+		fmt.Println("------us:", us)
+
+		fmt.Println("-----------------------------------")
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	lvl1 := us.PathContent("")
+	fmt.Println("root:", lvl1)
+
+	for _, path := range [][]string{
+		{},
+		{"G0"},
+		{"G0", "group1"},
+		{"G0", "group1", "group2"},
+		{"G0", "group1", "group2", "document"},
+	} {
+		fmt.Println("2022-05/"+filepath.Join(path...), us.PathContent("2022-05", path...))
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	fmt.Println()
+
+	// fi := us.FileItemsByPath("G0/group1/group2/document/go.mod")
+	// fmt.Println("fi:", fi)
+
+	fmt.Println()
+
+	id := "9051a74a0ac93389809944465f4befc1"
+	fis := us.FileItems(id)
+	if len(fis) > 0 {
+		fmt.Println("fis[0]:", fis[0])
+	} else {
+		fmt.Printf("Couldn't find file item @%s\n", id)
+	}
+
+	fmt.Println(string(us.FirstFileContent(id)))
+
+	us.SelfCheck(true)
 }
 
 func TestSaveFile(t *testing.T) {
@@ -91,28 +159,25 @@ func TestSaveFile(t *testing.T) {
 		{"GROUP00", "GROUP01", "GROUP03", "document"},
 		{"GROUP00", "GROUP01", "GROUP02", "document"},
 	} {
-		fmt.Println("2022-04/"+filepath.Join(path...), us1.PathContent("2022-04", path...))
+		fmt.Println("2022-05/"+filepath.Join(path...), us1.PathContent("2022-05", path...))
 	}
 
 	////////////////////////////////////////////////
 
-	fi := us1.FileItemByPath("GROUP00/GROUP01/GROUP02/document/go.sum")
-	fmt.Println("fi:", fi)
+	// fi := us1.FileItemsByPath("GROUP00/GROUP01/GROUP02/document/go.sum")
+	// fmt.Println("fi:", fi)
 
 	id := "8301ceb3ea3b5bf311fcab06f304ae14"
-	fis := us1.FileItemByID(id)
+	fis := us1.FileItems(id)
 	if len(fis) > 0 {
 		fmt.Println("fis[0]:", fis[0])
 	} else {
 		fmt.Printf("Couldn't find file item @v%s\n", id)
 	}
 
-	fmt.Println(string(us1.FileContentByID(id)))
+	fmt.Println(string(us1.FirstFileContent(id)))
 
-	// fi.AddRefBy
-	// fi.RmRefBy
 	// fi.AddNote
-	// fi.SetStatus
 	// fi.SetGroup
 	// us1.Update(fi, true)
 }
@@ -129,10 +194,8 @@ func TestFileItemDB(t *testing.T) {
 
 	lk.FailOnErrWhen(len(fis) == 0, "%v", fmt.Errorf("fis not found"))
 
-	fis[0].AddRefBy("abc", "def", "def", "ghi")
-	fis[0].RmRefBy("abc")
-	fis[0].SetStatus(status.Approved)
-	lk.FailOnErr("%v", fis[0].SetGroup(0, "GRP1"))
+	path, err := fis[0].SetGroup(0, "GRP1")
+	lk.FailOnErr("%v @ %v", path, err)
 
 	lk.FailOnErr("%v", us.Update(fis[0], true))
 	// us.SelfCheck(true) // remove empty directories

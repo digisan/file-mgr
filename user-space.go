@@ -2,6 +2,7 @@ package filemgr
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -13,10 +14,10 @@ import (
 
 	"github.com/digisan/file-mgr/fdb"
 	ft "github.com/digisan/file-mgr/fdb/ftype"
-	"github.com/digisan/file-mgr/fdb/status"
 	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
+	"github.com/digisan/gotk/strs"
 	lk "github.com/digisan/logkit"
 )
 
@@ -39,11 +40,12 @@ type UserSpace struct {
 	UserPath string              // user space path, usually is "root/name/"
 	db       *fdb.FDB            // shared by all users
 	FIs      []*fdb.FileItem     // all fileitems belong to this user
-	IDs      map[string]struct{} // fileitem is group loaded in memory
+	IDs      map[string]struct{} // fileitem which is group loaded in memory
 }
 
 func (us UserSpace) String() string {
 	sb := &strings.Builder{}
+	sb.WriteString("\n")
 	sb.WriteString(fmt.Sprintf("%-13s%s\n", "UName:", us.UName))
 	sb.WriteString(fmt.Sprintf("%-13s%s\n", "UserPath:", us.UserPath))
 	sb.WriteString("FileItems: [\n")
@@ -127,6 +129,12 @@ func (us *UserSpace) Update(fi *fdb.FileItem, selfcheck bool) error {
 // return storage path & error
 func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...string) (string, error) {
 
+	now := time.Now()
+
+	ext := strs.SplitPartFromLast(filename, ".", 1)
+	base := strs.SplitPartFromLast(filename, ".", 2)
+	filename = fmt.Sprintf("%s.%v.%s", base, now.Unix(), ext)
+
 	// /root/name/group0/.../groupX/type/file
 	grppath := filepath.Join(groups...)                                       // /group0/.../groupX/
 	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grppath) // /root/name/year-month/group0/.../groupX/
@@ -145,20 +153,18 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 	newpath := filepath.Join(path, fType)      // /root/name/year-month/group0/.../groupX/type/
 	gio.MustCreateDir(newpath)                 // /root/name/year-month/group0/.../groupX/type/
 	newpath = filepath.Join(newpath, filename) // /root/name/year-month/group0/.../groupX/type/file
-	err = os.Rename(oldpath, newpath)
-	if err == nil {
+
+	if err = os.Rename(oldpath, newpath); err == nil {
 		data, err := os.ReadFile(newpath)
 		if err != nil {
 			return "", err
 		}
 		fi := &fdb.FileItem{
-			Id:        fmt.Sprintf("%x", md5.Sum(data)), // sha1.Sum, sha256.Sum256
+			Id:        fmt.Sprintf("%x-%v", md5.Sum(data), now.UnixMilli()), // sha1.Sum, sha256.Sum256
 			Path:      newpath,
-			Tm:        time.Now().String(),
-			Status:    status.Received,
+			Tm:        now,
 			GroupList: strings.Join(groups, fdb.SEP_GRP),
 			Note:      note,
-			RefBy:     "",
 		}
 		if !us.hasMemFI(fi) {
 			if err = us.Update(fi, true); err == nil {
@@ -184,9 +190,9 @@ func (us *UserSpace) Own(fi *fdb.FileItem) bool {
 }
 
 func (us *UserSpace) SelfCheck(rmEmptyDir bool) error {
-	for _, fi := range us.FIs {
+	for i, fi := range us.FIs {
 		if !fd.FileExists(fi.Path) {
-			return fmt.Errorf("[%s] file does NOT exist on disk", fi.Path)
+			return fmt.Errorf("%d - [%s] file does NOT exist on disk", i, fi.Path)
 		}
 	}
 	if rmEmptyDir {
@@ -252,27 +258,28 @@ func (us *UserSpace) PathContent(tmYM string, grps ...string) (content []string)
 	return Settify(content...)
 }
 
-func (us *UserSpace) FileItemByPath(path string) *fdb.FileItem {
-	for _, fi := range us.FIs {
-		if path != "" && strings.HasSuffix(fi.Path, path) {
-			return fi
-		}
-	}
-	return nil
-}
+// func (us *UserSpace) FileItemsByPath(path string) (fis []*fdb.FileItem) {
+// 	// lk.FailOnErrWhen(len(filepath.SplitList(path)) < 2, "%v", errors.New("at least 2 levels path is needed"))
+// 	for _, fi := range us.FIs {
+// 		if path != "" && strings.Contains(fi.Path, path) {
+// 			fis = append(fis, fi)
+// 		}
+// 	}
+// 	return
+// }
 
-func (us *UserSpace) FileItemByID(id string) (fis []*fdb.FileItem) {
+func (us *UserSpace) FileItems(id string) (fis []*fdb.FileItem) {
+	lk.FailOnErrWhen(len(id) < 32, "%v", errors.New("id length MUST greater than 32"))
 	for _, fi := range us.FIs {
-		if fi.Id == id {
+		if strings.HasPrefix(fi.Id, id) {
 			fis = append(fis, fi)
 		}
 	}
 	return
 }
 
-func (us *UserSpace) FileContentByID(id string) []byte {
-	fis := us.FileItemByID(id)
-	if len(fis) > 0 {
+func (us *UserSpace) FirstFileContent(id string) []byte {
+	if fis := us.FileItems(id); len(fis) > 0 {
 		data, err := os.ReadFile(fis[0].Path)
 		lk.WarnOnErr("%v", err)
 		return data
@@ -280,17 +287,15 @@ func (us *UserSpace) FileContentByID(id string) []byte {
 	return nil
 }
 
-func (us *UserSpace) DelFileItemByID(id string) error {
-	for _, fi := range us.FileItemByID(id) {
-		if fi.RefBy == "" {
-			if err := us.db.RemoveFileItem(fi.ID(), fi.Path, true); err != nil {
-				lk.WarnOnErr("%v", err)
-				return err
-			}
-			if err := gio.RmFileAndEmptyDir(fi.Path); err != nil {
-				lk.WarnOnErr("%v", err)
-				return err
-			}
+func (us *UserSpace) DelFileItem(id string) error {
+	for _, fi := range us.FileItems(id) {
+		if err := us.db.RemoveFileItems(fi.ID(), true); err != nil {
+			lk.WarnOnErr("%v", err)
+			return err
+		}
+		if err := gio.RmFileAndEmptyDir(fi.Path); err != nil {
+			lk.WarnOnErr("%v", err)
+			return err
 		}
 	}
 	return nil
