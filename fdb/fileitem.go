@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	PS      = string(os.PathSeparator)
 	SEP     = "^^"
 	SEP_GRP = "^"
 )
@@ -186,14 +187,14 @@ func (fi *FileItem) MediaType() string {
 	}
 }
 
-// Update DB immediately
-func (fi *FileItem) AddNote(note string) {
+// Need updating DB immediately
+func (fi *FileItem) SetNote(note string) {
 	fi.Note = note
 }
 
-// Update DB immediately
+// Need updating DB immediately
 func (fi *FileItem) SetGroup(grpIdx int, grpName string) (string, error) {
-	oldGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
+	oldGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, PS)
 	fi.prevPath = fi.Path
 
 	if !fd.FileExists(fi.prevPath) {
@@ -213,14 +214,13 @@ func (fi *FileItem) SetGroup(grpIdx int, grpName string) (string, error) {
 
 	// [once changed, => change Path, => move file]
 	if oldGrpPath != "" {
-		newGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, "/")
+		newGrpPath := strings.ReplaceAll(fi.GroupList, SEP_GRP, PS)
 		fi.Path = strings.ReplaceAll(fi.Path, oldGrpPath, newGrpPath) // Path Update
 	} else {
-		file := filepath.Base(fi.Path)
-		dir := filepath.Dir(fi.Path)
-		head := filepath.Dir(dir)                         // user-space/name
-		tail := filepath.Join(filepath.Base(dir), file)   // text/sample.txt
-		fi.Path = filepath.Join(head, fi.GroupList, tail) // user-space/name/groupX/text/sample.txt , Path Update
+		file, dir := filepath.Base(fi.Path), filepath.Dir(fi.Path) // sample.txt & user-space/name/text
+		head := filepath.Dir(dir)                                  // user-space/name
+		tail := filepath.Join(filepath.Base(dir), file)            // text/sample.txt
+		fi.Path = filepath.Join(head, fi.GroupList, tail)          // user-space/name/groupX.../text/sample.txt , Path Update
 	}
 	gio.MustCreateDir(filepath.Dir(fi.Path))
 	return fi.Path, os.Rename(fi.prevPath, fi.Path)

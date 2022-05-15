@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/digisan/go-generics v0.1.10
-	github.com/digisan/gotk v0.1.6
+	github.com/digisan/gotk v0.1.7
 	github.com/digisan/logkit v0.0.8
 )
 
@@ -21,11 +21,11 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.6+incompatible // indirect
 	github.com/gookit/color v1.5.0 // indirect
-	github.com/klauspost/compress v1.15.2 // indirect
+	github.com/klauspost/compress v1.15.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
+	golang.org/x/net v0.0.0-20220513224357-95641704303c // indirect
+	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 )

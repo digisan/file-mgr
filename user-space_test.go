@@ -31,7 +31,30 @@ func TestDelFileItem(t *testing.T) {
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 
-	fmt.Println(us.DelFileItem("865987668c4f27777ab289749212f59b"))
+	fmt.Println(us.DelFileItem("ab2f12c80f6341789528aebb7c0e1324"))
+}
+
+func TestSetFileItemGroup(t *testing.T) {
+
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
+
+	us, err := UseUser("qing miao")
+	lk.FailOnErr("%v", err)
+
+	us.SetFIGroup("ab2f12c80f6341789528aebb7c0e1324", 2, "G3")
+
+	us.SelfCheck(true)
+}
+
+func TestSetNote(t *testing.T) {
+
+	SetFileMgrRoot("./data/user-space", "./data/fdb")
+
+	us, err := UseUser("qing miao")
+	lk.FailOnErr("%v", err)
+
+	us.SetFINote("ab2f12c80f6341789528aebb7c0e1324", "This is a Set Note 2")
+
 }
 
 func TestSaveFileV2(t *testing.T) {
@@ -45,8 +68,6 @@ func TestSaveFileV2(t *testing.T) {
 
 	for i, fname := range []string{"go.mod", "go.sum"} {
 
-		i += 8
-
 		file, err := os.Open(fname)
 		lk.FailOnErr("%v", err)
 		defer file.Close()
@@ -56,12 +77,6 @@ func TestSaveFileV2(t *testing.T) {
 
 		fmt.Println("---path:", path)
 		// fmt.Println("---us:", us)
-
-		path, err = us.FIs[i].SetGroup(0, "G1")        // ** db is outdated after SetGroup
-		lk.FailOnErr("%v", us.Update(us.FIs[i], true)) // ** must update immediately
-
-		fmt.Println("------path:", path)
-		fmt.Println("------us:", us)
 
 		fmt.Println("-----------------------------------")
 	}
@@ -90,7 +105,7 @@ func TestSaveFileV2(t *testing.T) {
 
 	fmt.Println()
 
-	id := "9051a74a0ac93389809944465f4befc1"
+	id := "ab2f12c80f6341789528aebb7c0e1324"
 	fis := us.FileItems(id)
 	if len(fis) > 0 {
 		fmt.Println("fis[0]:", fis[0])
@@ -197,7 +212,7 @@ func TestFileItemDB(t *testing.T) {
 	path, err := fis[0].SetGroup(0, "GRP1")
 	lk.FailOnErr("%v @ %v", path, err)
 
-	lk.FailOnErr("%v", us.Update(fis[0], true))
+	lk.FailOnErr("%v", us.UpdateFileItem(fis[0], true))
 	// us.SelfCheck(true) // remove empty directories
 
 	fmt.Println(us)

@@ -21,6 +21,10 @@ import (
 	lk "github.com/digisan/logkit"
 )
 
+const (
+	PS = string(os.PathSeparator)
+)
+
 var (
 	rootSP = "data/user-space"
 	rootDB = "data/user-fdb"
@@ -82,7 +86,7 @@ func UseUser(name string) (*UserSpace, error) {
 
 func (us *UserSpace) init() *UserSpace {
 	us.UserPath = filepath.Join(rootSP, us.UName)
-	us.UserPath = strings.TrimSuffix(us.UserPath, "/") + "/"
+	us.UserPath = strings.TrimSuffix(us.UserPath, PS) + PS
 	if !fd.DirExists(us.UserPath) {
 		gio.MustCreateDir(us.UserPath)
 	}
@@ -114,7 +118,7 @@ func (us *UserSpace) hasMemFI(fi *fdb.FileItem) bool {
 ////////////////////////////////////////////////////////////
 
 // db
-func (us *UserSpace) Update(fi *fdb.FileItem, selfcheck bool) error {
+func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfcheck bool) error {
 	defer func() {
 		if selfcheck {
 			lk.FailOnErr("%v", us.SelfCheck(false))
@@ -167,7 +171,7 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 			Note:      note,
 		}
 		if !us.hasMemFI(fi) {
-			if err = us.Update(fi, true); err == nil {
+			if err = us.UpdateFileItem(fi, true); err == nil {
 				us.FIs = append(us.FIs, fi)
 			}
 		}
@@ -246,10 +250,10 @@ NEXT:
 // tmYM: such as "2022-04"
 func (us *UserSpace) PathContent(tmYM string, grps ...string) (content []string) {
 	path := filepath.Join(tmYM, filepath.Join(grps...))
-	fullpath := strings.TrimSuffix(filepath.Join(us.UserPath, path), "/") + "/"
+	fullpath := strings.TrimSuffix(filepath.Join(us.UserPath, path), PS) + PS
 	for _, fi := range us.FIs {
 		if strings.HasPrefix(fi.Path, fullpath) {
-			segs := strings.Split(strings.TrimPrefix(fi.Path, fullpath), "/")
+			segs := strings.Split(strings.TrimPrefix(fi.Path, fullpath), PS)
 			if len(segs) > 0 {
 				content = append(content, segs[0])
 			}
@@ -296,6 +300,35 @@ func (us *UserSpace) DelFileItem(id string) error {
 		if err := gio.RmFileAndEmptyDir(fi.Path); err != nil {
 			lk.WarnOnErr("%v", err)
 			return err
+		}
+	}
+	return nil
+}
+
+func (us *UserSpace) SetFIGroup(fId string, iGrp int, nameGrp string) error {
+	for i, fi := range us.FIs {
+		if strings.HasPrefix(fi.ID(), fId) {
+			_, err := us.FIs[i].SetGroup(iGrp, nameGrp)
+			if err != nil {
+				return err
+			}
+			if err = us.UpdateFileItem(us.FIs[i], true); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (us *UserSpace) SetFINote(fId, note string) error {
+	for i, fi := range us.FIs {
+		if strings.HasPrefix(fi.ID(), fId) {
+			oriNote := us.FIs[i].Note
+			us.FIs[i].SetNote(note)
+			if err := us.UpdateFileItem(us.FIs[i], true); err != nil {
+				us.FIs[i].SetNote(oriNote)
+				return err
+			}
 		}
 	}
 	return nil
