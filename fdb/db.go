@@ -67,6 +67,7 @@ func (db *FDB) RemoveFileItems(id string, lock bool) error {
 		return errors.New("id length MUST greater than 32")
 	}
 
+	id = strings.ToLower(id)
 	return db.dbFile.Update(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
@@ -106,6 +107,7 @@ func (db *FDB) FirstFileItem(id string) (*FileItem, bool, error) {
 	db.Lock()
 	defer db.Unlock()
 
+	id = strings.ToLower(id)
 	var err error
 	fi, ret := &FileItem{}, false
 	err = db.dbFile.View(func(txn *badger.Txn) error {
@@ -172,6 +174,7 @@ func (db *FDB) ListFileItems(filter func(*FileItem) bool) (fis []*FileItem, err 
 }
 
 func (db *FDB) IsExisting(id string) bool {
+	id = strings.ToLower(id)
 	fi, ok, err := db.FirstFileItem(id)
 	return err == nil && ok && fi != nil
 }

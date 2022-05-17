@@ -164,7 +164,7 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 			return "", err
 		}
 		fi := &fdb.FileItem{
-			Id:        fmt.Sprintf("%x-%v", md5.Sum(data), now.UnixMilli()), // sha1.Sum, sha256.Sum256
+			Id:        strings.ToLower(fmt.Sprintf("%x-%v", md5.Sum(data), now.UnixMilli())), // sha1.Sum, sha256.Sum256
 			Path:      newpath,
 			Tm:        now,
 			GroupList: strings.Join(groups, fdb.SEP_GRP),
@@ -262,21 +262,11 @@ func (us *UserSpace) PathContent(tmYM string, grps ...string) (content []string)
 	return Settify(content...)
 }
 
-// func (us *UserSpace) FileItemsByPath(path string) (fis []*fdb.FileItem) {
-// 	// lk.FailOnErrWhen(len(filepath.SplitList(path)) < 2, "%v", errors.New("at least 2 levels path is needed"))
-// 	for _, fi := range us.FIs {
-// 		if path != "" && strings.Contains(fi.Path, path) {
-// 			fis = append(fis, fi)
-// 		}
-// 	}
-// 	return
-// }
-
 func (us *UserSpace) FileItems(id string) (fis []*fdb.FileItem, err error) {
-	// lk.FailOnErrWhen(len(id) < 32, "%v", errors.New("id length MUST greater than 32"))
 	if len(id) < 32 {
 		return nil, errors.New("id length MUST greater than 32")
 	}
+	id = strings.ToLower(id)
 	for _, fi := range us.FIs {
 		if strings.HasPrefix(fi.Id, id) {
 			fis = append(fis, fi)
