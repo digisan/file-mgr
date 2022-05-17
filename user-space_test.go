@@ -106,14 +106,17 @@ func TestSaveFileV2(t *testing.T) {
 	fmt.Println()
 
 	id := "ab2f12c80f6341789528aebb7c0e1324"
-	fis := us.FileItems(id)
+	fis, err := us.FileItems(id)
+	lk.FailOnErr("%v", err)
 	if len(fis) > 0 {
 		fmt.Println("fis[0]:", fis[0])
 	} else {
 		fmt.Printf("Couldn't find file item @%s\n", id)
 	}
 
-	fmt.Println(string(us.FirstFileContent(id)))
+	data, err := us.FirstFileContent(id)
+	lk.FailOnErr("%v", err)
+	fmt.Println(string(data))
 
 	us.SelfCheck(true)
 }
@@ -183,18 +186,18 @@ func TestSaveFile(t *testing.T) {
 	// fmt.Println("fi:", fi)
 
 	id := "8301ceb3ea3b5bf311fcab06f304ae14"
-	fis := us1.FileItems(id)
+	fis, err := us1.FileItems(id)
+	lk.FailOnErr("%v", err)
 	if len(fis) > 0 {
 		fmt.Println("fis[0]:", fis[0])
 	} else {
 		fmt.Printf("Couldn't find file item @v%s\n", id)
 	}
 
-	fmt.Println(string(us1.FirstFileContent(id)))
+	data, err := us1.FirstFileContent(id)
+	lk.FailOnErr("%v", err)
+	fmt.Println(string(data))
 
-	// fi.AddNote
-	// fi.SetGroup
-	// us1.Update(fi, true)
 }
 
 func TestFileItemDB(t *testing.T) {

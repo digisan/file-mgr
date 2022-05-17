@@ -272,8 +272,11 @@ func (us *UserSpace) PathContent(tmYM string, grps ...string) (content []string)
 // 	return
 // }
 
-func (us *UserSpace) FileItems(id string) (fis []*fdb.FileItem) {
-	lk.FailOnErrWhen(len(id) < 32, "%v", errors.New("id length MUST greater than 32"))
+func (us *UserSpace) FileItems(id string) (fis []*fdb.FileItem, err error) {
+	// lk.FailOnErrWhen(len(id) < 32, "%v", errors.New("id length MUST greater than 32"))
+	if len(id) < 32 {
+		return nil, errors.New("id length MUST greater than 32")
+	}
 	for _, fi := range us.FIs {
 		if strings.HasPrefix(fi.Id, id) {
 			fis = append(fis, fi)
@@ -282,17 +285,25 @@ func (us *UserSpace) FileItems(id string) (fis []*fdb.FileItem) {
 	return
 }
 
-func (us *UserSpace) FirstFileContent(id string) []byte {
-	if fis := us.FileItems(id); len(fis) > 0 {
+func (us *UserSpace) FirstFileContent(id string) ([]byte, error) {
+	fis, err := us.FileItems(id)
+	if err != nil {
+		return nil, err
+	}
+	if len(fis) > 0 {
 		data, err := os.ReadFile(fis[0].Path)
 		lk.WarnOnErr("%v", err)
-		return data
+		return data, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func (us *UserSpace) DelFileItem(id string) error {
-	for _, fi := range us.FileItems(id) {
+	fis, err := us.FileItems(id)
+	if err != nil {
+		return err
+	}
+	for _, fi := range fis {
 		if err := us.db.RemoveFileItems(fi.ID(), true); err != nil {
 			lk.WarnOnErr("%v", err)
 			return err
