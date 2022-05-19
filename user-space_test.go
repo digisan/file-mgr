@@ -25,9 +25,6 @@ func TestDelFileItem(t *testing.T) {
 
 	SetFileMgrRoot("./data/user-space", "./data/fdb")
 
-	db := fdb.GetDB("./data/fdb")
-	defer db.Close()
-
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 

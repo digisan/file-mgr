@@ -206,7 +206,7 @@ func (us *UserSpace) SelfCheck(rmEmptyDir bool) error {
 		}
 		for _, dir := range dirs {
 		NEXT:
-			empty, err := fd.DirIsEmpty(dir)
+			empty, err := fd.IsDirEmpty(dir)
 			if err != nil {
 				return err
 			}
@@ -298,7 +298,7 @@ func (us *UserSpace) DelFileItem(id string) error {
 			lk.WarnOnErr("%v", err)
 			return err
 		}
-		if err := gio.RmFileAndEmptyDir(fi.Path); err != nil {
+		if err := fd.RmFileAndEmptyDir(fi.Path); err != nil {
 			lk.WarnOnErr("%v", err)
 			return err
 		}
