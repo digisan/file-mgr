@@ -298,7 +298,7 @@ func (us *UserSpace) DelFileItem(id string) error {
 			lk.WarnOnErr("%v", err)
 			return err
 		}
-		if err := fd.RmFileAndEmptyDir(fi.Path); err != nil {
+		if err := fd.Remove(fi.Path, true); err != nil {
 			lk.WarnOnErr("%v", err)
 			return err
 		}

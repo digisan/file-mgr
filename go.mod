@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/digisan/go-generics v0.1.10
-	github.com/digisan/gotk v0.1.9
+	github.com/digisan/gotk v0.1.10
 	github.com/digisan/logkit v0.0.8
 )
 
@@ -25,7 +25,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/net v0.0.0-20220517181318-183a9ca12b87 // indirect
-	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
+	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
+	golang.org/x/sys v0.0.0-20220519141025-dcacdad47464 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 )
