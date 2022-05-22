@@ -62,13 +62,13 @@ var (
 	}
 )
 
-func FileType(f *os.File, filename string) string {
+func FileType(f *os.File, fname string) string {
 	// Get the content
 	contentType, err := fileContentType(f)
 	lk.FailOnErr("%v", err)
 	if t, ok := mContType[contentType]; ok {
 		if t == ft.Binary {
-			ext := filepath.Ext(filename)
+			ext := filepath.Ext(fname)
 			if t, ok := mBinType[ext]; ok {
 				return t
 			}

@@ -131,19 +131,22 @@ func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfcheck bool) error {
 }
 
 // return storage path & error
-func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...string) (string, error) {
+func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string) (string, error) {
 
 	now := time.Now()
 
-	ext := strs.SplitPartFromLast(filename, ".", 1)
-	base := strs.SplitPartFromLast(filename, ".", 2)
-	filename = fmt.Sprintf("%s.%v.%s", base, now.Unix(), ext)
+	if !strings.Contains(fname, ".") {
+		fname = fname + ".unknown"
+	}
+	ext := strs.SplitPartFromLast(fname, ".", 1)
+	base := strs.SplitPartFromLast(fname, ".", 2)
+	fname = fmt.Sprintf("%s.%v.%s", base, now.Unix(), ext)
 
 	// /root/name/group0/.../groupX/type/file
 	grppath := filepath.Join(groups...)                                       // /group0/.../groupX/
 	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grppath) // /root/name/year-month/group0/.../groupX/
 	gio.MustCreateDir(path)                                                   // mkdir /root/name/year-month/group0/.../groupX/
-	oldpath := filepath.Join(path, filename)                                  // /root/name/year-month/group0/.../groupX/file
+	oldpath := filepath.Join(path, fname)                                     // /root/name/year-month/group0/.../groupX/file
 	oldFile, err := os.Create(oldpath)
 	if err != nil {
 		return "", err
@@ -154,9 +157,9 @@ func (us *UserSpace) SaveFile(filename, note string, r io.Reader, groups ...stri
 	}
 
 	fType := fdb.GetFileType(oldpath)
-	newpath := filepath.Join(path, fType)      // /root/name/year-month/group0/.../groupX/type/
-	gio.MustCreateDir(newpath)                 // /root/name/year-month/group0/.../groupX/type/
-	newpath = filepath.Join(newpath, filename) // /root/name/year-month/group0/.../groupX/type/file
+	newpath := filepath.Join(path, fType)   // /root/name/year-month/group0/.../groupX/type/
+	gio.MustCreateDir(newpath)              // /root/name/year-month/group0/.../groupX/type/
+	newpath = filepath.Join(newpath, fname) // /root/name/year-month/group0/.../groupX/type/file
 
 	if err = os.Rename(oldpath, newpath); err == nil {
 		data, err := os.ReadFile(newpath)
