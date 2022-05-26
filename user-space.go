@@ -135,12 +135,15 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 
 	now := time.Now()
 
+	base, ext := "", ""
 	if !strings.Contains(fname, ".") {
-		fname = fname + ".unknown"
+		base, ext = fname, ""
+	} else {
+		ext = strs.SplitPartFromLast(fname, ".", 1)
+		base = strs.SplitPartFromLast(fname, ".", 2)
 	}
-	ext := strs.SplitPartFromLast(fname, ".", 1)
-	base := strs.SplitPartFromLast(fname, ".", 2)
 	fname = fmt.Sprintf("%s.%v.%s", base, now.Unix(), ext)
+	fname = strings.TrimSuffix(fname, ".")
 
 	// /root/name/group0/.../groupX/type/file
 	grppath := filepath.Join(groups...)                                       // /group0/.../groupX/
