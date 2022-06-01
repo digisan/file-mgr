@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	badger "github.com/dgraph-io/badger/v3"
-	ft "github.com/digisan/file-mgr/fdb/ftype"
 	. "github.com/digisan/go-generics/v2"
 	lk "github.com/digisan/logkit"
 )
@@ -134,7 +133,7 @@ func (db *FDB) FirstFileItem(id string) (*FileItem, bool, error) {
 }
 
 func (db *FDB) SearchFileItems(ftype string, groups ...string) (fis []*FileItem, err error) {
-	if ftype != "" && NotIn(ftype, ft.AllFileType()...) {
+	if ftype != "" && NotIn(ftype, FileTypes()...) {
 		return nil, fmt.Errorf("file type [%s] is unregistered", ftype)
 	}
 	return db.ListFileItems(func(fi *FileItem) bool {

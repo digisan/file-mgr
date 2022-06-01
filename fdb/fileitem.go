@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	ft "github.com/digisan/file-mgr/fdb/ftype"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
 	lk "github.com/digisan/logkit"
@@ -164,7 +163,7 @@ func (fi *FileItem) ID() string {
 func (fi *FileItem) Type() string {
 	dir := filepath.Dir(fi.Path)
 	typedir := filepath.Base(dir)
-	lk.FailOnErrWhen(!ft.TypeOK(typedir), "%v", fmt.Errorf("file type is unregistered"))
+	lk.FailOnErrWhen(!TypeOK(typedir), "%v", fmt.Errorf("file type is unregistered"))
 	return typedir
 }
 

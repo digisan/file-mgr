@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/digisan/file-mgr/fdb"
-	ft "github.com/digisan/file-mgr/fdb/ftype"
 	lk "github.com/digisan/logkit"
 )
 
@@ -63,12 +62,13 @@ func TestSaveFileV2(t *testing.T) {
 
 	///////////////////////////////////////////
 
-	for i, fname := range []string{"go.mod", "go.sum"} {
+	for i, fpath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key", "./samples/key.txt"} {
 
-		file, err := os.Open(fname)
+		file, err := os.Open(fpath)
 		lk.FailOnErr("%v", err)
 		defer file.Close()
 
+		fname := filepath.Base(fpath)
 		path, err := us.SaveFile(fname, fmt.Sprintf("this is a test %d", i), file, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
@@ -205,7 +205,7 @@ func TestFileItemDB(t *testing.T) {
 	lk.FailOnErr("%v", err)
 	// fmt.Println(us)
 
-	fis := us.SearchFileItem(ft.All, "*", "*", "*2")
+	fis := us.SearchFileItem(fdb.Any, "*", "*", "*2")
 
 	lk.FailOnErrWhen(len(fis) == 0, "%v", fmt.Errorf("fis not found"))
 

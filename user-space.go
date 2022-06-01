@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/digisan/file-mgr/fdb"
-	ft "github.com/digisan/file-mgr/fdb/ftype"
 	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
@@ -238,7 +237,7 @@ func (us *UserSpace) SearchFileItem(ftype string, groups ...string) (fis []*fdb.
 	}
 NEXT:
 	for _, fi := range us.FIs {
-		if ftype == ft.All || ftype == fi.Type() {
+		if ftype == fdb.Any || ftype == fi.Type() {
 			grouplist := strings.Split(fi.GroupList, fdb.SEP_GRP)
 			if len(regs) == len(grouplist) {
 				for i, reg := range regs {
