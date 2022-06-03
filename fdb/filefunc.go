@@ -12,7 +12,7 @@ import (
 
 const (
 	Document   = "document"
-	Photo      = "photo"
+	Image      = "image"
 	Audio      = "audio"
 	Video      = "video"
 	Archive    = "archive"
@@ -23,7 +23,7 @@ const (
 )
 
 func FileTypes() []string {
-	return []string{Document, Photo, Audio, Video, Archive, Executable, Binary, Unknown}
+	return []string{Document, Image, Audio, Video, Archive, Executable, Binary, Unknown}
 }
 
 func TypeOK(fType string) bool {
@@ -35,7 +35,7 @@ func FileType(f *os.File) string {
 	f.Read(head)
 	switch {
 	case filetype.IsImage(head):
-		return Photo
+		return Image
 	case filetype.IsVideo(head):
 		return Video
 	case filetype.IsAudio(head):
