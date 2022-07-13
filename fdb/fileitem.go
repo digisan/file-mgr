@@ -2,6 +2,7 @@ package fdb
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,9 @@ import (
 	"strings"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v3"
+	bh "github.com/digisan/db-helper/badger"
+	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/filedir"
 	gio "github.com/digisan/gotk/io"
 	lk "github.com/digisan/logkit"
@@ -31,40 +35,6 @@ type FileItem struct {
 	Note      string    `json:"note"`   // "note..."
 }
 
-// db key order
-const (
-	MOK_Id int = iota
-	MOK_END
-)
-
-func (fi *FileItem) KeyFieldAddr(mok int) any {
-	mFldAddr := map[int]any{
-		MOK_Id: &fi.Id,
-	}
-	return mFldAddr[mok]
-}
-
-// db value order
-const (
-	MOV_Path int = iota
-	MOV_Tm
-	MOV_GroupList
-	MOV_Note
-	MOV_END
-)
-
-func (fi *FileItem) ValFieldAddr(mov int) any {
-	mFldAddr := map[int]any{
-		MOV_Path:      &fi.Path,
-		MOV_Tm:        &fi.Tm,
-		MOV_GroupList: &fi.GroupList,
-		MOV_Note:      &fi.Note,
-	}
-	return mFldAddr[mov]
-}
-
-///////////////////////////////////////////////////
-
 func (fi FileItem) String() string {
 	if fi.Path != "" {
 		sb := strings.Builder{}
@@ -81,63 +51,99 @@ func (fi FileItem) String() string {
 	return "[Empty FileItem]\n"
 }
 
-func (fi *FileItem) Marshal() (forKey, forValue []byte) {
-	params := []struct {
-		end       int
-		fnFldAddr func(int) any
-		out       *[]byte
-	}{
-		{
-			end:       MOK_END,
-			fnFldAddr: fi.KeyFieldAddr,
-			out:       &forKey,
-		},
-		{
-			end:       MOV_END,
-			fnFldAddr: fi.ValFieldAddr,
-			out:       &forValue,
-		},
-	}
-	for _, param := range params {
-		sb := &strings.Builder{}
-		for i := 0; i < param.end; i++ {
-			if i > 0 {
-				sb.WriteString(SEP)
-			}
-			switch v := param.fnFldAddr(i).(type) {
-			case *string:
-				sb.WriteString(*v)
-			case *time.Time:
-				encoding, err := (*v).MarshalBinary()
-				lk.FailOnErr("%v", err)
-				sb.Write(encoding)
-			default:
-				panic("Marshal Error Type")
-			}
+// db key order
+const (
+	KO_Id int = iota
+	KO_END
+)
 
-		}
-		*param.out = []byte(sb.String())
+func (fi *FileItem) KeyFieldAddr(mok int) any {
+	mFldAddr := map[int]any{
+		KO_Id: &fi.Id,
 	}
-	return
+	return mFldAddr[mok]
 }
 
-func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) {
+// db value order
+const (
+	VO_Path int = iota
+	VO_Tm
+	VO_GroupList
+	VO_Note
+	VO_END
+)
+
+func (fi *FileItem) ValFieldAddr(mov int) any {
+	mFldAddr := map[int]any{
+		VO_Path:      &fi.Path,
+		VO_Tm:        &fi.Tm,
+		VO_GroupList: &fi.GroupList,
+		VO_Note:      &fi.Note,
+	}
+	return mFldAddr[mov]
+}
+
+///////////////////////////////////////////////////
+
+func (fi *FileItem) BadgerDB() *badger.DB {
+	return DbGrp.File
+}
+
+func (fi *FileItem) Key() []byte {
+	var (
+		sb = &strings.Builder{}
+	)
+	for i := 0; i < KO_END; i++ {
+		if i > 0 {
+			sb.WriteString(SEP)
+		}
+		switch v := fi.KeyFieldAddr(i).(type) {
+		case *string:
+			sb.WriteString(*v)
+		default:
+			panic("need more type for marshaling key")
+		}
+	}
+	return []byte(sb.String())
+}
+
+func (fi *FileItem) Value() []byte {
+	var (
+		sb = &strings.Builder{}
+	)
+	for i := 0; i < VO_END; i++ {
+		if i > 0 {
+			sb.WriteString(SEP)
+		}
+		switch v := fi.ValFieldAddr(i).(type) {
+		case *string:
+			sb.WriteString(*v)
+		case *time.Time:
+			encoding, err := (*v).MarshalBinary()
+			lk.FailOnErr("%v", err)
+			sb.Write(encoding)
+		default:
+			panic("need more type for marshaling value")
+		}
+	}
+	return []byte(sb.String())
+}
+
+func (fi *FileItem) Marshal(at any) (forKey, forValue []byte) {
+	return fi.Key(), fi.Value()
+}
+
+func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) (any, error) {
 	params := []struct {
 		in        []byte
 		fnFldAddr func(int) any
 	}{
-		{
-			in:        dbKey,
-			fnFldAddr: fi.KeyFieldAddr,
-		},
-		{
-			in:        dbVal,
-			fnFldAddr: fi.ValFieldAddr,
-		},
+		{dbKey, fi.KeyFieldAddr},
+		{dbVal, fi.ValFieldAddr},
 	}
 	for idx, param := range params {
 		for i, seg := range bytes.Split(param.in, []byte(SEP)) {
-			if (idx == 0 && i == MOK_END) || (idx == 1 && i == MOV_END) {
+			if (idx == 0 && i == KO_END) || (idx == 1 && i == VO_END) {
 				break
 			}
 			switch v := param.fnFldAddr(i).(type) {
@@ -152,6 +158,7 @@ func (fi *FileItem) Unmarshal(dbKey, dbVal []byte) {
 			}
 		}
 	}
+	return fi, nil
 }
 
 ///////////////////////////////////////////////////
@@ -223,4 +230,77 @@ func (fi *FileItem) SetGroup(grpIdx int, grpName string) (string, error) {
 	}
 	gio.MustCreateDir(filepath.Dir(fi.Path))
 	return fi.Path, os.Rename(fi.prevPath, fi.Path)
+}
+
+///////////////////////////////////////////////////
+
+// [id] is prefix, could remove many fi
+func RemoveFileItems(id string, lock bool) (int, error) {
+	if lock {
+		DbGrp.Lock()
+		defer DbGrp.Unlock()
+	}
+
+	if len(id) < 32 {
+		return 0, errors.New("id length MUST greater than 32")
+	}
+	return bh.DeleteObjectsDB[FileItem]([]byte(strings.ToLower(id)))
+}
+
+// exactly update ONE fi
+func UpdateFileItem(fi *FileItem) error {
+	DbGrp.Lock()
+	defer DbGrp.Unlock()
+
+	if fi.prevPath == "" {
+		fi.prevPath = fi.Path
+		defer func() { fi.prevPath = "" }()
+	}
+
+	// exactly remove ONE fi
+	if _, err := RemoveFileItems(fi.Id, false); err != nil {
+		return err
+	}
+	return bh.UpsertOneObjectDB(fi)
+}
+
+func FirstFileItem(id string) (*FileItem, bool, error) {
+	DbGrp.Lock()
+	defer DbGrp.Unlock()
+
+	fi, err := bh.GetFirstObjectDB[FileItem]([]byte(strings.ToLower(id)), nil)
+	if err != nil {
+		return nil, false, err
+	}
+	if fi == nil {
+		return fi, false, nil
+	}
+	return fi, fi.Path != "", nil
+}
+
+func ListFileItems(filter func(*FileItem) bool) ([]*FileItem, error) {
+	DbGrp.Lock()
+	defer DbGrp.Unlock()
+
+	return bh.GetObjectsDB([]byte(""), filter)
+}
+
+func IsExisting(id string) bool {
+	fi, ok, err := FirstFileItem(strings.ToLower(id))
+	return err == nil && ok && fi != nil
+}
+
+func SearchFileItems(ftype string, groups ...string) (fis []*FileItem, err error) {
+	if ftype != "" && NotIn(ftype, FileTypes()...) {
+		return nil, fmt.Errorf("file type [%s] is unregistered", ftype)
+	}
+	return ListFileItems(func(fi *FileItem) bool {
+		if ftype != "" {
+			return fi.Type() == ftype && strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
+		}
+		if ftype == "" && len(groups) > 0 {
+			return strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
+		}
+		return true
+	})
 }

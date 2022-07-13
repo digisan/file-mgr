@@ -6,40 +6,41 @@ import (
 	"time"
 
 	lk "github.com/digisan/logkit"
+	"github.com/google/uuid"
+)
+
+var (
+	id = uuid.New().String()
 )
 
 func TestUpdateFile(t *testing.T) {
-
-	fdb := GetDB("../data")
-	defer fdb.Close()
+	InitDB("../data")
+	defer CloseDB()
 
 	fi := &FileItem{
-		Id:        "id",
+		Id:        id,
 		Path:      "a/b/c/d",
 		Tm:        time.Now(),
 		GroupList: "",
 		Note:      "this is a note test",
 	}
 	fmt.Println(fi)
-
-	fdb.UpdateFileItem(fi)
+	fmt.Println(UpdateFileItem(fi))
 }
 
 func TestLoadFile(t *testing.T) {
+	InitDB("../data")
+	defer CloseDB()
 
-	fdb := GetDB("../data")
-	defer fdb.Close()
-
-	fi, ok, err := fdb.FirstFileItem("id")
+	fi, ok, err := FirstFileItem("7cfb1626-c129-473a-9b19-58a27da5b837")
 	fmt.Println(fi, ok, err)
 }
 
 func TestListFile(t *testing.T) {
+	InitDB("../data")
+	defer CloseDB()
 
-	fdb := GetDB("../data")
-	defer fdb.Close()
-
-	fis, err := fdb.ListFileItems(func(fi *FileItem) bool {
+	fis, err := ListFileItems(func(fi *FileItem) bool {
 		return true
 	})
 	lk.FailOnErr("%v", err)

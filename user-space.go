@@ -29,19 +29,10 @@ var (
 	rootDB = "data/user-fdb"
 )
 
-var fDB4Close *fdb.FDB // for closing
-
-func CloseFileMgr() {
-	if fDB4Close != nil {
-		fDB4Close.Close()
-		fDB4Close = nil
-	}
-}
-
 type UserSpace struct {
 	UName    string              // user unique name
 	UserPath string              // user space path, usually is "root/name/"
-	db       *fdb.FDB            // shared by all users
+	db       *fdb.DBGrp          // shared by all users
 	FIs      []*fdb.FileItem     // all fileitems belong to this user
 	IDs      map[string]struct{} // fileitem which is group loaded in memory
 }
@@ -63,20 +54,17 @@ func (us UserSpace) String() string {
 	return sb.String()
 }
 
-func SetFileMgrRoot(rtSpace, rtFDB string) {
-	if rtSpace != "" {
-		rootSP = filepath.Clean(rtSpace)
-	}
-	if rtFDB != "" {
-		rootDB = filepath.Clean(rtFDB)
+func SetFileMgrRoot(dir string) {
+	if dir = filepath.Clean(dir); len(dir) != 0 {
+		rootSP = filepath.Join(dir, filepath.Base(rootSP))
+		rootDB = filepath.Join(dir, filepath.Base(rootDB))
 	}
 }
 
 func UseUser(name string) (*UserSpace, error) {
-	defer func() { fDB4Close = fdb.GetDB(rootDB) }()
 	us := &UserSpace{
 		UName: name,
-		db:    fdb.GetDB(rootDB),
+		db:    fdb.InitDB(rootDB),
 		IDs:   make(map[string]struct{}),
 	}
 	us.init()
@@ -100,7 +88,7 @@ func (us *UserSpace) loadFI(selfcheck bool) (*UserSpace, error) {
 		}
 	}
 	var err error
-	us.FIs, err = us.db.ListFileItems(func(fi *fdb.FileItem) bool {
+	us.FIs, err = fdb.ListFileItems(func(fi *fdb.FileItem) bool {
 		return us.Own(fi)
 	})
 	for _, fi := range us.FIs {
@@ -124,7 +112,7 @@ func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfcheck bool) error {
 		}
 	}()
 	if us.Own(fi) {
-		return us.db.UpdateFileItem(fi)
+		return fdb.UpdateFileItem(fi)
 	}
 	return fmt.Errorf("%v does NOT belong to %v", *fi, *us)
 }
@@ -146,9 +134,9 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 
 	// /root/name/group0/.../groupX/type/file
 	grppath := filepath.Join(groups...)                                       // /group0/.../groupX/
-	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grppath) // /root/name/year-month/group0/.../groupX/
-	gio.MustCreateDir(path)                                                   // mkdir /root/name/year-month/group0/.../groupX/
-	oldpath := filepath.Join(path, fname)                                     // /root/name/year-month/group0/.../groupX/file
+	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grppath) // /root/name/2006-01/group0/.../groupX/
+	gio.MustCreateDir(path)                                                   // mkdir /root/name/2006-01/group0/.../groupX/
+	oldpath := filepath.Join(path, fname)                                     // /root/name/2006-01/group0/.../groupX/file
 	oldFile, err := os.Create(oldpath)
 	if err != nil {
 		return "", err
@@ -159,9 +147,9 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 	}
 
 	fType := fdb.GetFileType(oldpath)
-	newpath := filepath.Join(path, fType)   // /root/name/year-month/group0/.../groupX/type/
-	gio.MustCreateDir(newpath)              // /root/name/year-month/group0/.../groupX/type/
-	newpath = filepath.Join(newpath, fname) // /root/name/year-month/group0/.../groupX/type/file
+	newpath := filepath.Join(path, fType)   // /root/name/2006-01/group0/.../groupX/type/
+	gio.MustCreateDir(newpath)              // /root/name/2006-01/group0/.../groupX/type/
+	newpath = filepath.Join(newpath, fname) // /root/name/2006-01/group0/.../groupX/type/file
 
 	if err = os.Rename(oldpath, newpath); err == nil {
 		data, err := os.ReadFile(newpath)
@@ -299,7 +287,7 @@ func (us *UserSpace) DelFileItem(id string) error {
 		return err
 	}
 	for _, fi := range fis {
-		if err := us.db.RemoveFileItems(fi.ID(), true); err != nil {
+		if _, err := fdb.RemoveFileItems(fi.ID(), true); err != nil {
 			lk.WarnOnErr("%v", err)
 			return err
 		}
