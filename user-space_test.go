@@ -27,7 +27,7 @@ func TestLoadFileItem(t *testing.T) {
 
 func TestDelFileItem(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -37,7 +37,7 @@ func TestDelFileItem(t *testing.T) {
 
 func TestSetFileItemGroup(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -48,7 +48,7 @@ func TestSetFileItemGroup(t *testing.T) {
 
 func TestSetNote(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -58,7 +58,7 @@ func TestSetNote(t *testing.T) {
 
 func TestSaveFileV2(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -83,7 +83,7 @@ func TestSaveFileV2(t *testing.T) {
 }
 
 func TestListAllFI(t *testing.T) {
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	fdb.InitDB("./data/user-fdb")
 	defer fdb.CloseDB()
@@ -99,7 +99,7 @@ func TestListAllFI(t *testing.T) {
 
 func TestPathContent(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -124,7 +124,7 @@ func TestPathContent(t *testing.T) {
 
 func TestFileContent(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -152,7 +152,7 @@ func TestFileContent(t *testing.T) {
 
 // func TestSaveFile(t *testing.T) {
 
-// 	SetFileMgrRoot("./data")
+// 	InitFileMgr("./data")
 
 // 	us0, err := UseUser("qing miao")
 // 	lk.FailOnErr("%v", err)
@@ -230,7 +230,7 @@ func TestFileContent(t *testing.T) {
 
 func TestUpdateFileItem(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
@@ -251,7 +251,7 @@ func TestUpdateFileItem(t *testing.T) {
 
 func TestCheck(t *testing.T) {
 
-	SetFileMgrRoot("./data")
+	InitFileMgr("./data")
 
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)

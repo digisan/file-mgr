@@ -32,7 +32,6 @@ var (
 type UserSpace struct {
 	UName    string              // user unique name
 	UserPath string              // user space path, usually is "root/name/"
-	db       *fdb.DBGrp          // shared by all users
 	FIs      []*fdb.FileItem     // all fileitems belong to this user
 	IDs      map[string]struct{} // fileitem which is group loaded in memory
 }
@@ -54,17 +53,22 @@ func (us UserSpace) String() string {
 	return sb.String()
 }
 
-func SetFileMgrRoot(dir string) {
-	if dir = filepath.Clean(dir); len(dir) != 0 {
-		rootSP = filepath.Join(dir, filepath.Base(rootSP))
-		rootDB = filepath.Join(dir, filepath.Base(rootDB))
+// including 'InitDB'
+func InitFileMgr(root string) {
+	if root = filepath.Clean(root); len(root) != 0 {
+		rootSP = filepath.Join(root, filepath.Base(rootSP))
+		rootDB = filepath.Join(root, filepath.Base(rootDB))
 	}
+	fdb.InitDB(rootDB)
+}
+
+func DisposeFileMgr() {
+	fdb.CloseDB()
 }
 
 func UseUser(name string) (*UserSpace, error) {
 	us := &UserSpace{
 		UName: name,
-		db:    fdb.InitDB(rootDB),
 		IDs:   make(map[string]struct{}),
 	}
 	us.init()
