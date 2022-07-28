@@ -133,7 +133,7 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 		ext = strs.SplitPartFromLast(fname, ".", 1)
 		base = strs.SplitPartFromLast(fname, ".", 2)
 	}
-	fname = fmt.Sprintf("%s.%v.%s", base, now.Unix(), ext)
+	fname = fmt.Sprintf("%s-%v.%s", base, now.Unix(), ext)
 	fname = strings.TrimSuffix(fname, ".")
 
 	// /root/name/group0/.../groupX/type/file
@@ -151,6 +151,19 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 	}
 
 	fType := fdb.GetFileType(oldpath)
+
+	// further process after uploading
+	switch fType {
+	case "video":
+		if p := videoCrop(oldpath, note); len(p) != 0 {
+			if err := os.RemoveAll(oldpath); err != nil {
+				return "", err
+			}
+			oldpath = p
+		}
+	case "image":
+	}
+
 	newpath := filepath.Join(path, fType)   // /root/name/2006-01/group0/.../groupX/type/
 	gio.MustCreateDir(newpath)              // /root/name/2006-01/group0/.../groupX/type/
 	newpath = filepath.Join(newpath, fname) // /root/name/2006-01/group0/.../groupX/type/file
