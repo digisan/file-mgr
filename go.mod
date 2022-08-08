@@ -1,13 +1,13 @@
 module github.com/digisan/file-mgr
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
-	github.com/digisan/db-helper v0.0.4
-	github.com/digisan/go-generics v0.2.1
-	github.com/digisan/gotk v0.1.18
-	github.com/digisan/logkit v0.0.10
+	github.com/digisan/db-helper v0.0.6
+	github.com/digisan/go-generics v0.2.2
+	github.com/digisan/gotk v0.1.19
+	github.com/digisan/logkit v0.1.0
 	github.com/h2non/filetype v1.1.3
 	github.com/jtguibas/cinema v0.0.0-20200208054232-ca271f28a020
 )
@@ -29,7 +29,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/net v0.0.0-20220726230323-06994584191e // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
+	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )
