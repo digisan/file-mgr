@@ -153,15 +153,23 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 	fType := fdb.GetFileType(oldpath)
 
 	// further process after uploading
-	switch fType {
-	case "video":
-		if p := videoCrop(oldpath, note); len(p) != 0 {
-			if err := os.RemoveAll(oldpath); err != nil {
-				return "", err
+	if strings.Contains(note, "crop") {
+		switch fType {
+		case "video":
+			if p, err := videoCrop(oldpath, note); err == nil && len(p) != 0 {
+				if err := os.RemoveAll(oldpath); err != nil {
+					return "", err
+				}
+				oldpath = p
 			}
-			oldpath = p
+		case "image":
+			if p, err := imageCrop(oldpath, note); err == nil && len(p) != 0 {
+				if err := os.RemoveAll(oldpath); err != nil {
+					return "", err
+				}
+				oldpath = p
+			}
 		}
-	case "image":
 	}
 
 	newpath := filepath.Join(path, fType)   // /root/name/2006-01/group0/.../groupX/type/
