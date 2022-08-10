@@ -161,6 +161,7 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 					return "", err
 				}
 				oldpath = p
+				fname = filepath.Base(p)
 			}
 		case "image":
 			if p, err := imageCrop(oldpath, note); err == nil && len(p) != 0 {
@@ -168,6 +169,7 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 					return "", err
 				}
 				oldpath = p
+				fname = filepath.Base(p)
 			}
 		}
 	}

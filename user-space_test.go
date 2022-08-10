@@ -82,6 +82,30 @@ func TestSaveFileV2(t *testing.T) {
 	}
 }
 
+func TestSaveFileV3(t *testing.T) {
+
+	InitFileMgr("./data")
+
+	us, err := UseUser("qing miao")
+	lk.FailOnErr("%v", err)
+
+	for _, fpath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key.txt"} {
+
+		file, err := os.Open(fpath)
+		lk.FailOnErr("%v", err)
+		defer file.Close()
+
+		fname := filepath.Base(fpath)
+		path, err := us.SaveFile(fname, "crop:100,100,500,300", file, "group0", "group1", "group2")
+		lk.FailOnErr("%v", err)
+
+		fmt.Println("---path:", path)
+		// fmt.Println("---us:", us)
+
+		fmt.Println("-----------------------------------")
+	}
+}
+
 func TestSaveFileCropVideo(t *testing.T) {
 
 	InitFileMgr("./data")
