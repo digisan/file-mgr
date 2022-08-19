@@ -164,7 +164,7 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 				fname = filepath.Base(p)
 			}
 		case "image":
-			if p, err := imageCrop(oldpath, note); err == nil && len(p) != 0 {
+			if p, err := imageCrop(oldpath, note, "png"); err == nil && len(p) != 0 {
 				if err := os.RemoveAll(oldpath); err != nil {
 					return "", err
 				}

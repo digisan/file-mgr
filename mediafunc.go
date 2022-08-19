@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	"image/jpeg"
 	"image/png"
 	"os"
 
@@ -38,20 +39,20 @@ func roi4rgba(img image.Image, left, top, right, bottom int) *image.RGBA {
 	return rgba
 }
 
-// func saveJPG(img image.Image, path string) (image.Image, error) {
-// 	out, err := os.Create(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer out.Close()
+func saveJPG(img image.Image, path string) (image.Image, error) {
+	out, err := os.Create(path)
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
 
-// 	var opts jpeg.Options
-// 	opts.Quality = 100
-// 	if err := jpeg.Encode(out, img, &opts); err != nil {
-// 		return nil, err
-// 	}
-// 	return img, nil
-// }
+	var opts jpeg.Options
+	opts.Quality = 100
+	if err := jpeg.Encode(out, img, &opts); err != nil {
+		return nil, err
+	}
+	return img, nil
+}
 
 func savePNG(img image.Image, path string) (image.Image, error) {
 	out, err := os.Create(path)

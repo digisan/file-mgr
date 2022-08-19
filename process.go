@@ -11,18 +11,34 @@ import (
 )
 
 // note must be 'crop:x,y,w,h'
-func imageCrop(fpath, note string) (fcrop string, err error) {
+func imageCrop(fpath, note, outfmt string) (fcrop string, err error) {
 	x, y, w, h := 0, 0, 0, 0
 	if n, err := fmt.Sscanf(note, "crop:%d,%d,%d,%d", &x, &y, &w, &h); err == nil && n == 4 {
 		img, err := loadImage(fpath)
 		if err != nil {
 			return "", err
 		}
+
 		roi := roi4rgba(img, x, y, x+w, y+h)
 		fcrop = fd.ChangeFileName(fpath, "", "-crop")
-		fcrop = strings.TrimSuffix(fcrop, filepath.Ext(fcrop)) + ".png"
-		if _, err := savePNG(roi, fcrop); err != nil {
-			return "", err
+		fcrop = strings.TrimSuffix(fcrop, filepath.Ext(fcrop))
+
+		switch outfmt {
+		case ".png", "png":
+			fcrop += ".png"
+			if _, err := savePNG(roi, fcrop); err != nil {
+				return "", err
+			}
+		case ".jpg", "jpg":
+			fcrop += ".jpg"
+			if _, err := saveJPG(roi, fcrop); err != nil {
+				return "", err
+			}
+		default:
+			fcrop += ".png"
+			if _, err := savePNG(roi, fcrop); err != nil {
+				return "", err
+			}
 		}
 		return fcrop, nil
 	}
