@@ -29,6 +29,38 @@ var (
 	rootDB = "data/user-fdb"
 )
 
+/////////////////////////////////////////////////////////////////////////////
+
+var opt = struct {
+	chkOnLoad    bool
+	chkOnSave    bool
+	chkOnSetNote bool
+	chkOnSetGrp  bool
+}{
+	chkOnLoad:    true,
+	chkOnSave:    true,
+	chkOnSetNote: false,
+	chkOnSetGrp:  false,
+}
+
+func OptCheckOnLoad(v bool) {
+	opt.chkOnLoad = v
+}
+
+func OptCheckOnSave(v bool) {
+	opt.chkOnSave = v
+}
+
+func OptCheckOnSetNote(v bool) {
+	opt.chkOnSetNote = v
+}
+
+func OptCheckNoSetGrp(v bool) {
+	opt.chkOnSetGrp = v
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 type UserSpace struct {
 	UName    string              // user unique name
 	UserPath string              // user space path, usually is "root/name/"
@@ -72,7 +104,7 @@ func UseUser(name string) (*UserSpace, error) {
 		IDs:   make(map[string]struct{}),
 	}
 	us.init()
-	return us.loadFI(true)
+	return us.loadFI(opt.chkOnLoad)
 }
 
 func (us *UserSpace) init() *UserSpace {
@@ -191,7 +223,7 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 			Note:      note,
 		}
 		if !us.hasMemFI(fi) {
-			if err = us.UpdateFileItem(fi, true); err == nil {
+			if err = us.UpdateFileItem(fi, opt.chkOnSave); err == nil {
 				us.FIs = append(us.FIs, fi)
 			}
 		}
@@ -326,14 +358,13 @@ func (us *UserSpace) DelFileItem(id string) error {
 	return nil
 }
 
-func (us *UserSpace) SetFIGroup(fId string, iGrp int, nameGrp string) error {
+func (us *UserSpace) SetFINote(fId, note string) error {
 	for i, fi := range us.FIs {
 		if strings.HasPrefix(fi.ID(), fId) {
-			_, err := us.FIs[i].SetGroup(iGrp, nameGrp)
-			if err != nil {
-				return err
-			}
-			if err = us.UpdateFileItem(us.FIs[i], true); err != nil {
+			oriNote := us.FIs[i].Note
+			us.FIs[i].SetNote(note)
+			if err := us.UpdateFileItem(us.FIs[i], opt.chkOnSetNote); err != nil {
+				us.FIs[i].SetNote(oriNote)
 				return err
 			}
 		}
@@ -341,13 +372,14 @@ func (us *UserSpace) SetFIGroup(fId string, iGrp int, nameGrp string) error {
 	return nil
 }
 
-func (us *UserSpace) SetFINote(fId, note string) error {
+func (us *UserSpace) SetFIGroup(fId string, iGrp int, nameGrp string) error {
 	for i, fi := range us.FIs {
 		if strings.HasPrefix(fi.ID(), fId) {
-			oriNote := us.FIs[i].Note
-			us.FIs[i].SetNote(note)
-			if err := us.UpdateFileItem(us.FIs[i], true); err != nil {
-				us.FIs[i].SetNote(oriNote)
+			_, err := us.FIs[i].SetGroup(iGrp, nameGrp)
+			if err != nil {
+				return err
+			}
+			if err = us.UpdateFileItem(us.FIs[i], opt.chkOnSetGrp); err != nil {
 				return err
 			}
 		}
