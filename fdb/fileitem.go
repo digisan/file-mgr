@@ -244,7 +244,7 @@ func RemoveFileItems(id string, lock bool) (int, error) {
 	if len(id) < 32 {
 		return 0, errors.New("id length MUST greater than 32")
 	}
-	return bh.DeleteObjectsDB[FileItem]([]byte(strings.ToLower(id)))
+	return bh.DeleteObjects[FileItem]([]byte(strings.ToLower(id)))
 }
 
 // exactly update ONE fi
@@ -261,14 +261,14 @@ func UpdateFileItem(fi *FileItem) error {
 	if _, err := RemoveFileItems(fi.Id, false); err != nil {
 		return err
 	}
-	return bh.UpsertOneObjectDB(fi)
+	return bh.UpsertOneObject(fi)
 }
 
 func FirstFileItem(id string) (*FileItem, bool, error) {
 	DbGrp.Lock()
 	defer DbGrp.Unlock()
 
-	fi, err := bh.GetFirstObjectDB[FileItem]([]byte(strings.ToLower(id)), nil)
+	fi, err := bh.GetFirstObject[FileItem]([]byte(strings.ToLower(id)), nil)
 	if err != nil {
 		return nil, false, err
 	}
@@ -282,7 +282,7 @@ func ListFileItems(filter func(*FileItem) bool) ([]*FileItem, error) {
 	DbGrp.Lock()
 	defer DbGrp.Unlock()
 
-	return bh.GetObjectsDB([]byte(""), filter)
+	return bh.GetObjects([]byte(""), filter)
 }
 
 func IsExisting(id string) bool {
