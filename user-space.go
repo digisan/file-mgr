@@ -162,8 +162,8 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 	if !strings.Contains(fname, ".") {
 		base, ext = fname, ""
 	} else {
-		ext = strs.SplitPartFromLast(fname, ".", 1)
-		base = strs.SplitPartFromLast(fname, ".", 2)
+		ext = strs.SplitPartFromLastTo[string](fname, ".", 1)
+		base = strs.SplitPartFromLastTo[string](fname, ".", 2)
 	}
 	fname = fmt.Sprintf("%s-%v.%s", base, now.Unix(), ext)
 	fname = strings.TrimSuffix(fname, ".")
