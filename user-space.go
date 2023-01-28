@@ -117,8 +117,8 @@ func (us *UserSpace) init() *UserSpace {
 }
 
 // db
-func (us *UserSpace) loadFI(selfcheck bool) (*UserSpace, error) {
-	if selfcheck {
+func (us *UserSpace) loadFI(selfCheck bool) (*UserSpace, error) {
+	if selfCheck {
 		if err := us.SelfCheck(false); err != nil {
 			return nil, err
 		}
