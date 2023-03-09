@@ -68,8 +68,8 @@ func savePNG(img image.Image, path string) (image.Image, error) {
 }
 
 // return "width,height"
-func GetImageSize(fpath string) (string, error) {
-	img, err := loadImage(fpath)
+func GetImageSize(fPath string) (string, error) {
+	img, err := loadImage(fPath)
 	if err != nil || img == nil {
 		return "", err
 	}
@@ -80,8 +80,8 @@ func GetImageSize(fpath string) (string, error) {
 // https://pkg.go.dev/github.com/jtguibas/cinema#section-readme
 
 // return "width,height"
-func GetVideoSize(fpath string) (string, error) {
-	video, err := cinema.Load(fpath)
+func GetVideoSize(fPath string) (string, error) {
+	video, err := cinema.Load(fPath)
 	if err != nil || video == nil {
 		return "", err
 	}

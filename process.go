@@ -6,41 +6,41 @@ import (
 	"path/filepath"
 	"strings"
 
-	fd "github.com/digisan/gotk/filedir"
+	fd "github.com/digisan/gotk/file-dir"
 	"github.com/jtguibas/cinema"
 )
 
 // note must be 'crop:x,y,w,h'
-func imageCrop(fpath, note, outfmt string) (fcrop string, err error) {
+func imageCrop(fPath, note, outFmt string) (fCrop string, err error) {
 	x, y, w, h := 0, 0, 0, 0
 	if n, err := fmt.Sscanf(note, "crop:%d,%d,%d,%d", &x, &y, &w, &h); err == nil && n == 4 {
-		img, err := loadImage(fpath)
+		img, err := loadImage(fPath)
 		if err != nil {
 			return "", err
 		}
 
 		roi := roi4rgba(img, x, y, x+w, y+h)
-		fcrop = fd.ChangeFileName(fpath, "", "-crop")
-		fcrop = strings.TrimSuffix(fcrop, filepath.Ext(fcrop))
+		fCrop = fd.ChangeFileName(fPath, "", "-crop")
+		fCrop = strings.TrimSuffix(fCrop, filepath.Ext(fCrop))
 
-		switch outfmt {
+		switch outFmt {
 		case ".png", "png":
-			fcrop += ".png"
-			if _, err := savePNG(roi, fcrop); err != nil {
+			fCrop += ".png"
+			if _, err := savePNG(roi, fCrop); err != nil {
 				return "", err
 			}
 		case ".jpg", "jpg":
-			fcrop += ".jpg"
-			if _, err := saveJPG(roi, fcrop); err != nil {
+			fCrop += ".jpg"
+			if _, err := saveJPG(roi, fCrop); err != nil {
 				return "", err
 			}
 		default:
-			fcrop += ".png"
-			if _, err := savePNG(roi, fcrop); err != nil {
+			fCrop += ".png"
+			if _, err := savePNG(roi, fCrop); err != nil {
 				return "", err
 			}
 		}
-		return fcrop, nil
+		return fCrop, nil
 	}
 	return "", errors.New("note must be 'crop:x,y,w,h' to crop image")
 }
@@ -51,20 +51,20 @@ func imageCrop(fpath, note, outfmt string) (fcrop string, err error) {
 // https://pkg.go.dev/github.com/jtguibas/cinema#section-readme
 
 // note must be 'crop:x,y,w,h'
-func videoCrop(fpath, note string) (fcrop string, err error) {
+func videoCrop(fPath, note string) (fCrop string, err error) {
 	x, y, w, h := 0, 0, 0, 0
 	if n, err := fmt.Sscanf(note, "crop:%d,%d,%d,%d", &x, &y, &w, &h); err == nil && n == 4 {
-		fcrop = fd.ChangeFileName(fpath, "", "-crop")
-		fcrop = strings.TrimSuffix(fcrop, filepath.Ext(fcrop)) + ".mp4"
-		video, err := cinema.Load(fpath)
+		fCrop = fd.ChangeFileName(fPath, "", "-crop")
+		fCrop = strings.TrimSuffix(fCrop, filepath.Ext(fCrop)) + ".mp4"
+		video, err := cinema.Load(fPath)
 		if err != nil {
 			return "", err
 		}
 		video.Crop(x, y, w, h)
-		if err := video.Render(fcrop); err != nil {
+		if err := video.Render(fCrop); err != nil {
 			return "", err
 		}
-		return fcrop, nil
+		return fCrop, nil
 	}
 	return "", errors.New("note must be 'crop:x,y,w,h' to crop video")
 }

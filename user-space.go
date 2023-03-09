@@ -14,8 +14,7 @@ import (
 
 	"github.com/digisan/file-mgr/fdb"
 	. "github.com/digisan/go-generics/v2"
-	fd "github.com/digisan/gotk/filedir"
-	gio "github.com/digisan/gotk/io"
+	fd "github.com/digisan/gotk/file-dir"
 	"github.com/digisan/gotk/strs"
 	lk "github.com/digisan/logkit"
 )
@@ -64,8 +63,8 @@ func OptCheckNoSetGrp(v bool) {
 type UserSpace struct {
 	UName    string              // user unique name
 	UserPath string              // user space path, usually is "root/name/"
-	FIs      []*fdb.FileItem     // all fileitems belong to this user
-	IDs      map[string]struct{} // fileitem which is group loaded in memory
+	FIs      []*fdb.FileItem     // all fileItems belong to this user
+	IDs      map[string]struct{} // fileItem which is group loaded in memory
 }
 
 func (us UserSpace) String() string {
@@ -111,7 +110,7 @@ func (us *UserSpace) init() *UserSpace {
 	us.UserPath = filepath.Join(rootSP, us.UName)
 	us.UserPath = strings.TrimSuffix(us.UserPath, PS) + PS
 	if !fd.DirExists(us.UserPath) {
-		gio.MustCreateDir(us.UserPath)
+		fd.MustCreateDir(us.UserPath)
 	}
 	return us
 }
@@ -141,9 +140,9 @@ func (us *UserSpace) hasMemFI(fi *fdb.FileItem) bool {
 ////////////////////////////////////////////////////////////
 
 // db
-func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfcheck bool) error {
+func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfCheck bool) error {
 	defer func() {
-		if selfcheck {
+		if selfCheck {
 			lk.FailOnErr("%v", us.SelfCheck(false))
 		}
 	}()
@@ -154,26 +153,26 @@ func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfcheck bool) error {
 }
 
 // return storage path & error
-func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string) (string, error) {
+func (us *UserSpace) SaveFile(fName, note string, r io.Reader, groups ...string) (string, error) {
 
 	now := time.Now()
 
 	base, ext := "", ""
-	if !strings.Contains(fname, ".") {
-		base, ext = fname, ""
+	if !strings.Contains(fName, ".") {
+		base, ext = fName, ""
 	} else {
-		ext = strs.SplitPartFromLastTo[string](fname, ".", 1)
-		base = strs.SplitPartFromLastTo[string](fname, ".", 2)
+		ext = strs.SplitPartFromLastTo[string](fName, ".", 1)
+		base = strs.SplitPartFromLastTo[string](fName, ".", 2)
 	}
-	fname = fmt.Sprintf("%s-%v.%s", base, now.Unix(), ext)
-	fname = strings.TrimSuffix(fname, ".")
+	fName = fmt.Sprintf("%s-%v.%s", base, now.Unix(), ext)
+	fName = strings.TrimSuffix(fName, ".")
 
 	// /root/name/group0/.../groupX/type/file
-	grppath := filepath.Join(groups...)                                       // /group0/.../groupX/
-	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grppath) // /root/name/2006-01/group0/.../groupX/
-	gio.MustCreateDir(path)                                                   // mkdir /root/name/2006-01/group0/.../groupX/
-	oldpath := filepath.Join(path, fname)                                     // /root/name/2006-01/group0/.../groupX/file
-	oldFile, err := os.Create(oldpath)
+	grpPath := filepath.Join(groups...)                                       // /group0/.../groupX/
+	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grpPath) // /root/name/2006-01/group0/.../groupX/
+	fd.MustCreateDir(path)                                                    // mkdir /root/name/2006-01/group0/.../groupX/
+	oldPath := filepath.Join(path, fName)                                     // /root/name/2006-01/group0/.../groupX/file
+	oldFile, err := os.Create(oldPath)
 	if err != nil {
 		return "", err
 	}
@@ -182,42 +181,42 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 		return "", err
 	}
 
-	fType := fdb.GetFileType(oldpath)
+	fType := fdb.GetFileType(oldPath)
 
 	// further process after uploading
 	if strings.Contains(note, "crop") {
 		switch fType {
 		case "video":
-			if p, err := videoCrop(oldpath, note); err == nil && len(p) != 0 {
-				if err := os.RemoveAll(oldpath); err != nil {
+			if p, err := videoCrop(oldPath, note); err == nil && len(p) != 0 {
+				if err := os.RemoveAll(oldPath); err != nil {
 					return "", err
 				}
-				oldpath = p
-				fname = filepath.Base(p)
+				oldPath = p
+				fName = filepath.Base(p)
 			}
 		case "image":
-			if p, err := imageCrop(oldpath, note, "png"); err == nil && len(p) != 0 {
-				if err := os.RemoveAll(oldpath); err != nil {
+			if p, err := imageCrop(oldPath, note, "png"); err == nil && len(p) != 0 {
+				if err := os.RemoveAll(oldPath); err != nil {
 					return "", err
 				}
-				oldpath = p
-				fname = filepath.Base(p)
+				oldPath = p
+				fName = filepath.Base(p)
 			}
 		}
 	}
 
-	newpath := filepath.Join(path, fType)   // /root/name/2006-01/group0/.../groupX/type/
-	gio.MustCreateDir(newpath)              // /root/name/2006-01/group0/.../groupX/type/
-	newpath = filepath.Join(newpath, fname) // /root/name/2006-01/group0/.../groupX/type/file
+	newPath := filepath.Join(path, fType)   // /root/name/2006-01/group0/.../groupX/type/
+	fd.MustCreateDir(newPath)               // /root/name/2006-01/group0/.../groupX/type/
+	newPath = filepath.Join(newPath, fName) // /root/name/2006-01/group0/.../groupX/type/file
 
-	if err = os.Rename(oldpath, newpath); err == nil {
-		data, err := os.ReadFile(newpath)
+	if err = os.Rename(oldPath, newPath); err == nil {
+		data, err := os.ReadFile(newPath)
 		if err != nil {
 			return "", err
 		}
 		fi := &fdb.FileItem{
 			Id:        strings.ToLower(fmt.Sprintf("%x-%v", md5.Sum(data), now.UnixMilli())), // sha1.Sum, sha256.Sum256
-			Path:      newpath,
+			Path:      newPath,
 			Tm:        now,
 			GroupList: strings.Join(groups, fdb.SEP_GRP),
 			Note:      note,
@@ -228,7 +227,7 @@ func (us *UserSpace) SaveFile(fname, note string, r io.Reader, groups ...string)
 			}
 		}
 	}
-	return newpath, err
+	return newPath, err
 }
 
 // 'fh' --- FormFile("param"), return storage path & error
@@ -275,7 +274,7 @@ func (us *UserSpace) SelfCheck(rmEmptyDir bool) error {
 	return nil
 }
 
-func (us *UserSpace) SearchFileItem(ftype string, groups ...string) (fis []*fdb.FileItem) {
+func (us *UserSpace) SearchFileItem(fType string, groups ...string) (fis []*fdb.FileItem) {
 	regs := make([]*regexp.Regexp, 0, len(groups))
 	for _, grp := range groups {
 		ltr := strings.ReplaceAll(grp, `*`, `[\d\w\s]*`)
@@ -284,11 +283,11 @@ func (us *UserSpace) SearchFileItem(ftype string, groups ...string) (fis []*fdb.
 	}
 NEXT:
 	for _, fi := range us.FIs {
-		if ftype == fdb.Any || ftype == fi.Type() {
-			grouplist := strings.Split(fi.GroupList, fdb.SEP_GRP)
-			if len(regs) == len(grouplist) {
+		if fType == fdb.Any || fType == fi.Type() {
+			groupList := strings.Split(fi.GroupList, fdb.SEP_GRP)
+			if len(regs) == len(groupList) {
 				for i, reg := range regs {
-					if reg.FindString(grouplist[i]) == "" {
+					if reg.FindString(groupList[i]) == "" {
 						continue NEXT
 					}
 				}
@@ -302,10 +301,10 @@ NEXT:
 // tmYM: such as "2022-04"
 func (us *UserSpace) PathContent(tmYM string, grps ...string) (content []string) {
 	path := filepath.Join(tmYM, filepath.Join(grps...))
-	fullpath := strings.TrimSuffix(filepath.Join(us.UserPath, path), PS) + PS
+	fullPath := strings.TrimSuffix(filepath.Join(us.UserPath, path), PS) + PS
 	for _, fi := range us.FIs {
-		if strings.HasPrefix(fi.Path, fullpath) {
-			segs := strings.Split(strings.TrimPrefix(fi.Path, fullpath), PS)
+		if strings.HasPrefix(fi.Path, fullPath) {
+			segs := strings.Split(strings.TrimPrefix(fi.Path, fullPath), PS)
 			if len(segs) > 0 {
 				content = append(content, segs[0])
 			}

@@ -13,8 +13,7 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	bh "github.com/digisan/db-helper/badger"
 	. "github.com/digisan/go-generics/v2"
-	fd "github.com/digisan/gotk/filedir"
-	gio "github.com/digisan/gotk/io"
+	fd "github.com/digisan/gotk/file-dir"
 	lk "github.com/digisan/logkit"
 )
 
@@ -169,9 +168,9 @@ func (fi *FileItem) ID() string {
 
 func (fi *FileItem) Type() string {
 	dir := filepath.Dir(fi.Path)
-	typedir := filepath.Base(dir)
-	lk.FailOnErrWhen(!TypeOK(typedir), "%v", fmt.Errorf("file type is unregistered"))
-	return typedir
+	typeDir := filepath.Base(dir)
+	lk.FailOnErrWhen(!TypeOK(typeDir), "%v", fmt.Errorf("file type is unregistered"))
+	return typeDir
 }
 
 func (fi *FileItem) Name() string {
@@ -228,7 +227,7 @@ func (fi *FileItem) SetGroup(grpIdx int, grpName string) (string, error) {
 		tail := filepath.Join(filepath.Base(dir), file)            // text/sample.txt
 		fi.Path = filepath.Join(head, fi.GroupList, tail)          // user-space/name/groupX.../text/sample.txt , Path Update
 	}
-	gio.MustCreateDir(filepath.Dir(fi.Path))
+	fd.MustCreateDir(filepath.Dir(fi.Path))
 	return fi.Path, os.Rename(fi.prevPath, fi.Path)
 }
 
@@ -290,15 +289,15 @@ func IsExisting(id string) bool {
 	return err == nil && ok && fi != nil
 }
 
-func SearchFileItems(ftype string, groups ...string) (fis []*FileItem, err error) {
-	if ftype != "" && NotIn(ftype, FileTypes()...) {
-		return nil, fmt.Errorf("file type [%s] is unregistered", ftype)
+func SearchFileItems(fType string, groups ...string) (fis []*FileItem, err error) {
+	if fType != "" && NotIn(fType, FileTypes()...) {
+		return nil, fmt.Errorf("file type [%s] is unregistered", fType)
 	}
 	return ListFileItems(func(fi *FileItem) bool {
-		if ftype != "" {
-			return fi.Type() == ftype && strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
+		if fType != "" {
+			return fi.Type() == fType && strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
 		}
-		if ftype == "" && len(groups) > 0 {
+		if fType == "" && len(groups) > 0 {
 			return strings.HasPrefix(fi.GroupList, strings.Join(groups, SEP_GRP))
 		}
 		return true

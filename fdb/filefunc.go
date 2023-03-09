@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	. "github.com/digisan/go-generics/v2"
-	fd "github.com/digisan/gotk/filedir"
+	fd "github.com/digisan/gotk/file-dir"
 	lk "github.com/digisan/logkit"
 	"github.com/h2non/filetype"
 )
@@ -51,21 +51,21 @@ func FileType(f *os.File) string {
 	}
 }
 
-func GetFileType(fpath string) string {
-	if !fd.FileExists(fpath) {
+func GetFileType(fPath string) string {
+	if !fd.FileExists(fPath) {
 		return ""
 	}
-	f, err := os.Open(fpath)
+	f, err := os.Open(fPath)
 	lk.FailOnErr("%v", err)
 	defer f.Close()
-	ftype := FileType(f)
-	if ftype == Unknown {
-		switch filepath.Ext(fpath) {
+	fType := FileType(f)
+	if fType == Unknown {
+		switch filepath.Ext(fPath) {
 		case ".txt": // add more if needed
-			ftype = Document
+			fType = Document
 		case ".exe":
-			ftype = Executable
+			fType = Executable
 		}
 	}
-	return ftype
+	return fType
 }

@@ -64,15 +64,15 @@ func TestSaveFileV2(t *testing.T) {
 	lk.FailOnErr("%v", err)
 
 	// "./samples/key.txt" overwrites "./samples/key", but in reality, it shouldn't happen unless same files both arrive in same millisecond
-	// for i, fpath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key", "./samples/key.txt"} {
-	for i, fpath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key.txt"} {
+	// for i, fPath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key", "./samples/key.txt"} {
+	for i, fPath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key.txt"} {
 
-		file, err := os.Open(fpath)
+		file, err := os.Open(fPath)
 		lk.FailOnErr("%v", err)
 		defer file.Close()
 
-		fname := filepath.Base(fpath)
-		path, err := us.SaveFile(fname, fmt.Sprintf("this is a test note %d", i), file, "group0", "group1", "group2")
+		fName := filepath.Base(fPath)
+		path, err := us.SaveFile(fName, fmt.Sprintf("this is a test note %d", i), file, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
 		fmt.Println("---path:", path)
@@ -89,14 +89,14 @@ func TestSaveFileV3(t *testing.T) {
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 
-	for _, fpath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key.txt"} {
+	for _, fPath := range []string{"./samples/moon", "./samples/moonpdf", "./samples/moondoc", "./samples/Screencast", "./samples/key.txt"} {
 
-		file, err := os.Open(fpath)
+		file, err := os.Open(fPath)
 		lk.FailOnErr("%v", err)
 		defer file.Close()
 
-		fname := filepath.Base(fpath)
-		path, err := us.SaveFile(fname, "crop:100,100,500,300", file, "group0", "group1", "group2")
+		fName := filepath.Base(fPath)
+		path, err := us.SaveFile(fName, "crop:100,100,500,300", file, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
 		fmt.Println("---path:", path)
@@ -113,14 +113,14 @@ func TestSaveFileCropVideo(t *testing.T) {
 	us, err := UseUser("qing miao")
 	lk.FailOnErr("%v", err)
 
-	for _, fpath := range []string{"./samples/Screencast"} {
+	for _, fPath := range []string{"./samples/Screencast"} {
 
-		file, err := os.Open(fpath)
+		file, err := os.Open(fPath)
 		lk.FailOnErr("%v", err)
 		defer file.Close()
 
-		fname := filepath.Base(fpath)
-		path, err := us.SaveFile(fname, "crop:100-100-400-500", file, "group0", "group1", "group2")
+		fName := filepath.Base(fPath)
+		path, err := us.SaveFile(fName, "crop:100-100-400-500", file, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
 		fmt.Println("---path:", path)
