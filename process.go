@@ -42,7 +42,7 @@ func imageCrop(fPath, note, outFmt string) (fCrop string, err error) {
 		}
 		return fCrop, nil
 	}
-	return "", errors.New("note must be 'crop:x,y,w,h' to crop image")
+	return "", errors.New("note must be 'crop:x,y,w,h' for cropping")
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -66,5 +66,5 @@ func videoCrop(fPath, note string) (fCrop string, err error) {
 		}
 		return fCrop, nil
 	}
-	return "", errors.New("note must be 'crop:x,y,w,h' to crop video")
+	return "", errors.New("note must be 'crop:x,y,w,h' for cropping")
 }

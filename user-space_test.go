@@ -284,7 +284,7 @@ func TestUpdateFileItem(t *testing.T) {
 	lk.FailOnErr("%v", err)
 	// fmt.Println(us)
 
-	fis := us.SearchFileItem(fdb.Any, "*", "*", "*2")
+	fis := us.SearchFileItem("any", "*", "*", "*2")
 	// lk.FailOnErrWhen(len(fis) == 0, "%v", fmt.Errorf("fis not found"))
 
 	for _, fi := range fis {

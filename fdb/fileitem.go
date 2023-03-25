@@ -12,7 +12,6 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	bh "github.com/digisan/db-helper/badger"
-	. "github.com/digisan/go-generics/v2"
 	fd "github.com/digisan/gotk/file-dir"
 	lk "github.com/digisan/logkit"
 )
@@ -169,7 +168,9 @@ func (fi *FileItem) ID() string {
 func (fi *FileItem) Type() string {
 	dir := filepath.Dir(fi.Path)
 	typeDir := filepath.Base(dir)
-	lk.FailOnErrWhen(!TypeOK(typeDir), "%v", fmt.Errorf("file type is unregistered"))
+	if !fd.IsSupportedFileType(typeDir) {
+		return "file type is unregistered"
+	}
 	return typeDir
 }
 
@@ -290,7 +291,7 @@ func IsExisting(id string) bool {
 }
 
 func SearchFileItems(fType string, groups ...string) (fis []*FileItem, err error) {
-	if fType != "" && NotIn(fType, FileTypes()...) {
+	if fType != "" && !fd.IsSupportedFileType(fType) {
 		return nil, fmt.Errorf("file type [%s] is unregistered", fType)
 	}
 	return ListFileItems(func(fi *FileItem) bool {

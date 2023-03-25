@@ -181,12 +181,17 @@ func (us *UserSpace) SaveFile(fName, note string, r io.Reader, groups ...string)
 		return "", err
 	}
 
-	fType := fdb.GetFileType(oldPath)
+	oldRdr, err := os.Open(oldPath)
+	if err != nil {
+		return "", err
+	}
+	fType := fd.FileType(oldRdr)
+	defer oldRdr.Close()
 
 	// further process after uploading
-	if strings.Contains(note, "crop") {
+	if strings.Contains(note, "crop:") {
 		switch fType {
-		case "video":
+		case fd.Video:
 			if p, err := videoCrop(oldPath, note); err == nil && len(p) != 0 {
 				if err := os.RemoveAll(oldPath); err != nil {
 					return "", err
@@ -194,7 +199,7 @@ func (us *UserSpace) SaveFile(fName, note string, r io.Reader, groups ...string)
 				oldPath = p
 				fName = filepath.Base(p)
 			}
-		case "image":
+		case fd.Image:
 			if p, err := imageCrop(oldPath, note, "png"); err == nil && len(p) != 0 {
 				if err := os.RemoveAll(oldPath); err != nil {
 					return "", err
@@ -283,7 +288,7 @@ func (us *UserSpace) SearchFileItem(fType string, groups ...string) (fis []*fdb.
 	}
 NEXT:
 	for _, fi := range us.FIs {
-		if fType == fdb.Any || fType == fi.Type() {
+		if fType == "any" || fType == fi.Type() {
 			groupList := strings.Split(fi.GroupList, fdb.SEP_GRP)
 			if len(regs) == len(groupList) {
 				for i, reg := range regs {
