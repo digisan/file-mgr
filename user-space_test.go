@@ -72,7 +72,7 @@ func TestSaveFileV2(t *testing.T) {
 		defer file.Close()
 
 		fName := filepath.Base(fPath)
-		path, err := us.SaveFile(fName, fmt.Sprintf("this is a test note %d", i), file, "group0", "group1", "group2")
+		path, err := us.SaveFile(file, fName, fmt.Sprintf("this is a test note %d", i), true, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
 		fmt.Println("---path:", path)
@@ -96,7 +96,7 @@ func TestSaveFileV3(t *testing.T) {
 		defer file.Close()
 
 		fName := filepath.Base(fPath)
-		path, err := us.SaveFile(fName, "crop:100,100,500,300", file, "group0", "group1", "group2")
+		path, err := us.SaveFile(file, fName, "crop:100,100,500,300", true, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
 		fmt.Println("---path:", path)
@@ -120,7 +120,7 @@ func TestSaveFileCropVideo(t *testing.T) {
 		defer file.Close()
 
 		fName := filepath.Base(fPath)
-		path, err := us.SaveFile(fName, "crop:100-100-400-500", file, "group0", "group1", "group2")
+		path, err := us.SaveFile(file, fName, "crop:100-100-400-500", true, "group0", "group1", "group2")
 		lk.FailOnErr("%v", err)
 
 		fmt.Println("---path:", path)

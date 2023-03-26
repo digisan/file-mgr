@@ -153,7 +153,7 @@ func (us *UserSpace) UpdateFileItem(fi *fdb.FileItem, selfCheck bool) error {
 }
 
 // return storage path & error
-func (us *UserSpace) SaveFile(fName, note string, r io.Reader, groups ...string) (string, error) {
+func (us *UserSpace) SaveFile(r io.Reader, fName, note string, addYM bool, groups ...string) (string, error) {
 
 	now := time.Now()
 
@@ -168,10 +168,13 @@ func (us *UserSpace) SaveFile(fName, note string, r io.Reader, groups ...string)
 	fName = strings.TrimSuffix(fName, ".")
 
 	// /root/name/group0/.../groupX/type/file
-	grpPath := filepath.Join(groups...)                                       // /group0/.../groupX/
-	path := filepath.Join(us.UserPath, time.Now().Format("2006-01"), grpPath) // /root/name/2006-01/group0/.../groupX/
-	fd.MustCreateDir(path)                                                    // mkdir /root/name/2006-01/group0/.../groupX/
-	oldPath := filepath.Join(path, fName)                                     // /root/name/2006-01/group0/.../groupX/file
+	grpPath := filepath.Join(groups...)         // /group0/.../groupX/
+	path := filepath.Join(us.UserPath, grpPath) // /root/name/group0/.../groupX/
+	if addYM {
+		path = filepath.Join(us.UserPath, time.Now().Format("2006-01"), grpPath) // /root/name/2006-01/group0/.../groupX/
+	}
+	fd.MustCreateDir(path)                // mkdir /root/name/2006-01/group0/.../groupX/
+	oldPath := filepath.Join(path, fName) // /root/name/2006-01/group0/.../groupX/file
 	oldFile, err := os.Create(oldPath)
 	if err != nil {
 		return "", err
@@ -236,13 +239,13 @@ func (us *UserSpace) SaveFile(fName, note string, r io.Reader, groups ...string)
 }
 
 // 'fh' --- FormFile("param"), return storage path & error
-func (us *UserSpace) SaveFormFile(fh *multipart.FileHeader, note string, groups ...string) (string, error) {
+func (us *UserSpace) SaveFormFile(fh *multipart.FileHeader, note string, addYM bool, groups ...string) (string, error) {
 	file, err := fh.Open()
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
-	return us.SaveFile(fh.Filename, note, file, groups...)
+	return us.SaveFile(file, fh.Filename, note, addYM, groups...)
 }
 
 func (us *UserSpace) Own(fi *fdb.FileItem) bool {
