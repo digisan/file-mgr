@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v4"
 	bh "github.com/digisan/db-helper/badger"
 	fd "github.com/digisan/gotk/file-dir"
 	lk "github.com/digisan/logkit"
