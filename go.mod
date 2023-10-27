@@ -8,8 +8,8 @@ require (
 	github.com/dgraph-io/badger/v4 v4.2.0
 	github.com/digisan/db-helper v0.0.36
 	github.com/digisan/go-generics v0.4.0
-	github.com/digisan/gotk v0.4.3
-	github.com/digisan/logkit v0.2.10
+	github.com/digisan/gotk v0.4.4
+	github.com/digisan/logkit v0.2.11
 	github.com/google/uuid v1.1.2
 	github.com/jtguibas/cinema v0.0.0-20200208054232-ca271f28a020
 )

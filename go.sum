@@ -19,10 +19,10 @@ github.com/digisan/db-helper v0.0.36 h1:aupdyLP9xVSVb2sfyLSazU9lW0wxYEtUNajCyjG0
 github.com/digisan/db-helper v0.0.36/go.mod h1:Y8qJzHJXLAXy2jOi6bfYnfaJPcdBkI9n8WvFRkq/dKk=
 github.com/digisan/go-generics v0.4.0 h1:8AqfkwhE1vmy3HvY3YkzwRk2LY4140JvnTZkfoFZenI=
 github.com/digisan/go-generics v0.4.0/go.mod h1:2aTVLuSocslv7ZotYw/YhKeIxyqsERsF9hfR/UsvXm8=
-github.com/digisan/gotk v0.4.3 h1:95k4Bjd+iCBdJ1lGCS8UEDt08LePcJoXd6Vxjv6om64=
-github.com/digisan/gotk v0.4.3/go.mod h1:2aiS8KRgpzKpW36xgHcKyxINSyXpHLGQLdKVYCNwFk8=
-github.com/digisan/logkit v0.2.10 h1:pqjy61zcCjVGwlP7QXr3MDRME8VsLGbUVQyVvLiPNsQ=
-github.com/digisan/logkit v0.2.10/go.mod h1:eN3yEtav2MkelXJOFBgx+bpI/maqeO965qKuEs95dt8=
+github.com/digisan/gotk v0.4.4 h1:80QnK7U90BRg7gglvp56V/5vkrEl3IkmmLPo+uWWGLc=
+github.com/digisan/gotk v0.4.4/go.mod h1:2aiS8KRgpzKpW36xgHcKyxINSyXpHLGQLdKVYCNwFk8=
+github.com/digisan/logkit v0.2.11 h1:rdEHfmGZ1KgFooAlB/2+i0qXpmO/CM1X46RRHEzGS48=
+github.com/digisan/logkit v0.2.11/go.mod h1:P672VV3gWufc+e8txcwJAsFoKP6v06xEPrQc0QKSUFg=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
