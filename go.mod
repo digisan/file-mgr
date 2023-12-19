@@ -4,10 +4,10 @@ go 1.21.4
 
 require (
 	github.com/dgraph-io/badger/v4 v4.2.0
-	github.com/digisan/db-helper v0.1.3
+	github.com/digisan/db-helper v0.1.4
 	github.com/digisan/go-generics v0.4.3
-	github.com/digisan/gotk v0.4.12
-	github.com/digisan/logkit v0.2.14
+	github.com/digisan/gotk v0.4.14
+	github.com/digisan/logkit v0.2.15
 	github.com/google/uuid v1.1.2
 	github.com/jtguibas/cinema v0.0.0-20200208054232-ca271f28a020
 )
